@@ -4,15 +4,17 @@ import "../styles/globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
+  subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Tu Proyecto",
-  description: "Descripción de tu app",
+  title: "Catefarm",
+  description: "Sistema para cadena de farmacias",
 };
 
 export default function RootLayout({
@@ -22,8 +24,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} bg-gray-50 text-gray-900 min-h-screen`}
+      >
+        <main className="min-h-screen flex flex-col">
+          {children}
+        </main>
       </body>
     </html>
   );
