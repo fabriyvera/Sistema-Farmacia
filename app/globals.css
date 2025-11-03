@@ -1,3 +1,4 @@
+@export "tailwindcss/pos";
 @custom-variant dark (&:is(.dark *));
 
 :root {
