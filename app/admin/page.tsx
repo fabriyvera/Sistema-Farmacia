@@ -28,7 +28,7 @@ import Staff from "../components/Staff";
 import Inventory from "../components/Inventory";
 import Customers from "../components/Customers";
 
-const App = () => {
+const AdminPage = () => {
   const [activeView, setActiveView] = useState("dashboard");
 
   const menuItems = [
@@ -133,4 +133,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default AdminPage;

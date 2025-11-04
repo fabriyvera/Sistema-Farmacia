@@ -1,0 +1,280 @@
+"use client";
+import { use, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Label } from "./ui/label";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { ArrowLeft, BookmarkCheck, Plus, Minus, AlertCircle, Check, MapPin } from "lucide-react";
+import type { Product } from "../cliente/page";
+
+interface ProductDetailProps {
+  product: Product;
+  onBack: () => void;
+  onReserve: (product: Product, quantity: number, pickupLocation: string) => void;
+}
+
+const ProductDetail = ({ product, onBack, onReserve }: ProductDetailProps) => {
+  const [quantity, setQuantity] = useState(1);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showReserveDialog, setShowReserveDialog] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState("sucursal-centro");
+
+  const pharmacyLocations = [
+    { id: "sucursal-centro", name: "Sucursal Centro", address: "Av. Principal 123, Centro" },
+    { id: "sucursal-norte", name: "Sucursal Norte", address: "Calle Norte 456, Zona Norte" },
+    { id: "sucursal-sur", name: "Sucursal Sur", address: "Av. Sur 789, Zona Sur" },
+    { id: "sucursal-plaza", name: "Sucursal Plaza Comercial", address: "Plaza Mayor, Local 45" }
+  ];
+
+  const handleReserve = () => {
+    const location = pharmacyLocations.find(loc => loc.id === selectedLocation);
+    onReserve(product, quantity, location?.name || "");
+    setShowReserveDialog(false);
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+      onBack();
+    }, 2000);
+  };
+
+  const incrementQuantity = () => {
+    if (quantity < product.stock) {
+      setQuantity(quantity + 1);
+    }
+  };
+
+  const decrementQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
+    }
+  };
+
+  return (
+    <div className="min-h-full bg-white">
+      {/* Header */}
+      <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 z-10">
+        <button
+          onClick={onBack}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <h2 className="text-lg">Detalle del Producto</h2>
+      </div>
+
+      {/* Product Image */}
+      <div className="relative">
+        <img
+          src={product.image}
+          alt={product.name}
+          className="w-full h-64 object-cover"
+        />
+        {product.requiresPrescription && (
+          <div className="absolute top-4 right-4">
+            <Badge variant="destructive" className="text-sm">
+              Requiere Receta Médica
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 space-y-4">
+        {/* Product Info */}
+        <div>
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1">
+              <h1 className="text-xl mb-1">{product.name}</h1>
+              <Badge variant="outline" className="mb-2">
+                {product.category}
+              </Badge>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl text-primary">${product.price.toFixed(2)}</p>
+              <p className="text-sm text-muted-foreground">por unidad</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 text-sm">
+            <Badge variant={product.stock > 50 ? "default" : "secondary"}>
+              {product.stock > 50 ? "Disponible" : "Stock Limitado"}
+            </Badge>
+            <span className="text-muted-foreground">
+              {product.stock} unidades disponibles
+            </span>
+          </div>
+        </div>
+
+        {/* Description */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Descripción</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            {product.description}
+          </CardContent>
+        </Card>
+
+        {/* Active Ingredient */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Principio Activo</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm">
+            {product.activeIngredient}
+          </CardContent>
+        </Card>
+
+        {/* Prescription Warning */}
+        {product.requiresPrescription && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-4 flex gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="text-red-900 mb-1">
+                  Este medicamento requiere receta médica
+                </p>
+                <p className="text-red-700 text-xs">
+                  Deberás presentar tu receta al momento de recoger el producto en farmacia
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quantity Selector */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Cantidad</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={decrementQuantity}
+                disabled={quantity <= 1}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="text-2xl w-12 text-center">{quantity}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={incrementQuantity}
+                disabled={quantity >= product.stock}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+              <div className="flex-1 text-right">
+                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="text-xl text-primary">
+                  ${(product.price * quantity).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Success Message */}
+        {showSuccess && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-4 flex items-center gap-2">
+              <Check className="h-5 w-5 text-green-600" />
+              <p className="text-sm text-green-900">
+                ¡Reserva realizada exitosamente! Tienes 24 horas para recogerlo.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Action Buttons */}
+        <div className="space-y-3 pb-4">
+          <Button
+            className="w-full gap-2"
+            size="lg"
+            onClick={() => setShowReserveDialog(true)}
+            disabled={product.stock === 0}
+          >
+            <BookmarkCheck className="h-5 w-5" />
+            Reservar Producto
+          </Button>
+        </div>
+
+        {/* Additional Info */}
+        <div className="bg-blue-50 rounded-lg p-4 space-y-2 text-sm">
+          <p className="flex items-start gap-2">
+            <Check className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <span className="text-blue-900">Reserva válida por 24 horas</span>
+          </p>
+          <p className="flex items-start gap-2">
+            <Check className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <span className="text-blue-900">Retiro gratis en sucursal</span>
+          </p>
+          <p className="flex items-start gap-2">
+            <Check className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <span className="text-blue-900">Sin costo de reserva</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Reserve Dialog */}
+      <Dialog open={showReserveDialog} onOpenChange={setShowReserveDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Selecciona tu sucursal</DialogTitle>
+            <DialogDescription>
+              Elige dónde recogerás tu reserva. Tendrás 24 horas para retirarla.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <RadioGroup value={selectedLocation} onValueChange={setSelectedLocation}>
+              <div className="space-y-3">
+                {pharmacyLocations.map((location) => (
+                  <div key={location.id} className="flex items-start space-x-3">
+                    <RadioGroupItem value={location.id} id={location.id} className="mt-1" />
+                    <Label htmlFor={location.id} className="flex-1 cursor-pointer">
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm mb-1">{location.name}</p>
+                          <p className="text-xs text-muted-foreground">{location.address}</p>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-2">
+            <p className="text-sm text-orange-900">
+              <strong>Resumen de tu reserva:</strong>
+            </p>
+            <p className="text-sm text-orange-800 mt-1">
+              {quantity} x {product.name}
+            </p>
+            <p className="text-sm text-orange-800">
+              Total: ${(product.price * quantity).toFixed(2)}
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReserveDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleReserve} className="gap-2">
+              <BookmarkCheck className="h-4 w-4" />
+              Confirmar Reserva
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default ProductDetail;
