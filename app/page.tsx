@@ -21,12 +21,16 @@ import {
   UserCircle,
   Settings,
   Pill,
+  FileText,
+  ShoppingCart,
 } from "lucide-react";
 import Dashboard from "./components/Dashboard";
 import Suppliers from "./components/Suppliers";
 import Staff from "./components/Staff";
 import Inventory from "./components/Inventory";
 import Customers from "./components/Customers";
+import Reports from "./components/Reports";
+import Sales from "./components/Sales";
 
 const App = () => {
   const [activeView, setActiveView] = useState("dashboard");
@@ -57,6 +61,16 @@ const App = () => {
       title: "Clientes",
       icon: UserCircle,
     },
+    {
+      id: "reports",
+      title: "Reportes",
+      icon: FileText,
+    },
+    {
+      id: "sales",      
+      title: "Ventas",
+      icon: ShoppingCart,
+    }
   ];
 
   const renderView = () => {
@@ -71,6 +85,10 @@ const App = () => {
         return <Inventory />;
       case "customers":
         return <Customers />;
+      case "reports":
+        return <Reports/>;
+      case "sales":
+        return <Sales/>;
       default:
         return <Dashboard />;
     }

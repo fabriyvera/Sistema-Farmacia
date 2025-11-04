@@ -99,7 +99,7 @@ const Staff = () => {
         <div>
           <h1>Personal Administrativo</h1>
           <p className="text-muted-foreground">
-            Gestiona el personal de la organizaci��n
+            Gestiona el personal de la organizacion
           </p>
         </div>
         <Dialog>

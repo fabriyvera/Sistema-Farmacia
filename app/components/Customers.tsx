@@ -263,7 +263,7 @@ const Customers = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-primary">
-                    ${customer.totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                    Bs. {customer.totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusColor(customer.status)}>

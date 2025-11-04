@@ -290,7 +290,7 @@ const Inventory = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>${product.price.toFixed(2)}</TableCell>
+                      <TableCell>Bs.{product.price.toFixed(2)}</TableCell>
                       <TableCell className="text-sm">{product.supplier}</TableCell>
                       <TableCell className="text-sm">{product.expiry}</TableCell>
                       <TableCell>
