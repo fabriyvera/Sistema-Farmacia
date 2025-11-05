@@ -1,6 +1,7 @@
 "use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Users, Package, Building2, ShoppingCart, TrendingUp, AlertCircle } from "lucide-react";
+import BranchManagement from "./BranchManagement";
 
 const Dashboard = () => {
   const stats = [
@@ -140,6 +141,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+      <BranchManagement />
     </div>
   );
 };
