@@ -1,4 +1,3 @@
-"use client";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -29,7 +28,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Badge } from "./ui/badge";
-import { ShoppingCart, Plus, Search, DollarSign, Calendar, User, Package } from "lucide-react";
+import { ShoppingCart, Plus, Search, DollarSign, Calendar, User, Package, Trash2, Wallet } from "lucide-react";
 
 interface Sale {
   id: string;
@@ -97,10 +96,17 @@ const Sales = () => {
   // Form state for new sale
   const [newSale, setNewSale] = useState({
     customerName: "",
+    paymentMethod: "Efectivo"
+  });
+
+  // Cart items for the current sale
+  const [cartItems, setCartItems] = useState<Array<{ name: string; quantity: number; price: number }>>([]);
+
+  // Temporary state for adding a product to cart
+  const [tempProduct, setTempProduct] = useState({
     productName: "",
     quantity: "1",
-    price: "",
-    paymentMethod: "Efectivo"
+    price: ""
   });
 
   const availableProducts = [
@@ -114,30 +120,61 @@ const Sales = () => {
     { name: "Amoxicilina 500mg", price: 85.00 }
   ];
 
+  const handleAddToCart = () => {
+    if (!tempProduct.productName || !tempProduct.quantity || !tempProduct.price) {
+      alert("Por favor selecciona un producto y especifica la cantidad");
+      return;
+    }
+
+    const quantity = parseInt(tempProduct.quantity);
+    const price = parseFloat(tempProduct.price);
+
+    // Check if product already exists in cart
+    const existingItemIndex = cartItems.findIndex(item => item.name === tempProduct.productName);
+    
+    if (existingItemIndex !== -1) {
+      // Update quantity if product exists
+      const updatedCart = [...cartItems];
+      updatedCart[existingItemIndex].quantity += quantity;
+      setCartItems(updatedCart);
+    } else {
+      // Add new product to cart
+      setCartItems([...cartItems, {
+        name: tempProduct.productName,
+        quantity: quantity,
+        price: price
+      }]);
+    }
+
+    // Reset temp product
+    setTempProduct({
+      productName: "",
+      quantity: "1",
+      price: ""
+    });
+  };
+
+  const handleRemoveFromCart = (index: number) => {
+    const updatedCart = cartItems.filter((_, i) => i !== index);
+    setCartItems(updatedCart);
+  };
+
   const handleAddSale = () => {
-    if (!newSale.customerName || !newSale.productName || !newSale.price) {
-      alert("Por favor completa todos los campos");
+    if (!newSale.customerName || cartItems.length === 0) {
+      alert("Por favor completa el nombre del cliente y agrega al menos un producto");
       return;
     }
 
     const now = new Date();
     const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     
-    const quantity = parseInt(newSale.quantity);
-    const price = parseFloat(newSale.price);
-    const total = quantity * price;
+    const total = cartItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
 
     const sale: Sale = {
       id: `VEN-${String(sales.length + 1).padStart(3, '0')}`,
       date: formattedDate,
       customerName: newSale.customerName,
-      products: [
-        {
-          name: newSale.productName,
-          quantity: quantity,
-          price: price
-        }
-      ],
+      products: cartItems,
       total: total,
       paymentMethod: newSale.paymentMethod,
       status: "Completada"
@@ -147,22 +184,29 @@ const Sales = () => {
     setIsAddDialogOpen(false);
     setNewSale({
       customerName: "",
+      paymentMethod: "Efectivo"
+    });
+    setCartItems([]);
+    setTempProduct({
       productName: "",
       quantity: "1",
-      price: "",
-      paymentMethod: "Efectivo"
+      price: ""
     });
   };
 
   const handleProductSelect = (productName: string) => {
     const product = availableProducts.find(p => p.name === productName);
     if (product) {
-      setNewSale({
-        ...newSale,
+      setTempProduct({
+        ...tempProduct,
         productName: productName,
         price: product.price.toString()
       });
     }
+  };
+
+  const calculateCartTotal = () => {
+    return cartItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
   };
 
   const filteredSales = sales.filter(sale =>
@@ -190,14 +234,15 @@ const Sales = () => {
               Nueva Venta
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Registrar Nueva Venta</DialogTitle>
               <DialogDescription>
-                Completa los detalles de la venta
+                Completa los detalles de la venta y agrega los productos
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              {/* Customer Information */}
               <div className="grid gap-2">
                 <Label htmlFor="customerName">Nombre del Cliente</Label>
                 <Input
@@ -207,47 +252,92 @@ const Sales = () => {
                   onChange={(e) => setNewSale({ ...newSale, customerName: e.target.value })}
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="product">Producto</Label>
-                <Select
-                  value={newSale.productName}
-                  onValueChange={handleProductSelect}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un producto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableProducts.map((product) => (
-                      <SelectItem key={product.name} value={product.name}>
-                        {product.name} - Bs.{product.price}
-                      </SelectItem>
+
+              {/* Add Product Section */}
+              <div className="border-t pt-4">
+                <h3 className="mb-3">Agregar Productos</h3>
+                <div className="grid gap-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="product">Producto</Label>
+                    <Select
+                      value={tempProduct.productName}
+                      onValueChange={handleProductSelect}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un producto" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableProducts.map((product) => (
+                          <SelectItem key={product.name} value={product.name}>
+                            {product.name} - Bs.{product.price}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="quantity">Cantidad</Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        min="1"
+                        value={tempProduct.quantity}
+                        onChange={(e) => setTempProduct({ ...tempProduct, quantity: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="price">Precio Unitario</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={tempProduct.price}
+                        onChange={(e) => setTempProduct({ ...tempProduct, price: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={handleAddToCart}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Agregar a la Venta
+                  </Button>
+                </div>
+              </div>
+
+              {/* Cart Items */}
+              {cartItems.length > 0 && (
+                <div className="border-t pt-4">
+                  <h3 className="mb-3">Productos en la Venta</h3>
+                  <div className="space-y-2">
+                    {cartItems.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <p className="text-sm">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.quantity} x Bs. {item.price.toFixed(2)} = Bs.{(item.quantity * item.price).toFixed(2)}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveFromCart(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="quantity">Cantidad</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    value={newSale.quantity}
-                    onChange={(e) => setNewSale({ ...newSale, quantity: e.target.value })}
-                  />
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="price">Precio Unitario</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={newSale.price}
-                    onChange={(e) => setNewSale({ ...newSale, price: e.target.value })}
-                  />
-                </div>
-              </div>
+              )}
+
+              {/* Payment Method */}
               <div className="grid gap-2">
                 <Label htmlFor="paymentMethod">Método de Pago</Label>
                 <Select
@@ -264,20 +354,27 @@ const Sales = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {newSale.quantity && newSale.price && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                  <p className="text-sm text-orange-900">
+
+              {/* Total */}
+              {cartItems.length > 0 && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <p className="text-orange-900">
                     <strong>Total a cobrar: </strong>
-                    Bs.{(parseFloat(newSale.quantity) * parseFloat(newSale.price || "0")).toFixed(2)}
+                    <span className="text-xl">Bs. {calculateCartTotal().toFixed(2)}</span>
                   </p>
                 </div>
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                setIsAddDialogOpen(false);
+                setCartItems([]);
+                setTempProduct({ productName: "", quantity: "1", price: "" });
+                setNewSale({ customerName: "", paymentMethod: "Efectivo" });
+              }}>
                 Cancelar
               </Button>
-              <Button onClick={handleAddSale}>
+              <Button onClick={handleAddSale} disabled={cartItems.length === 0}>
                 Registrar Venta
               </Button>
             </DialogFooter>
@@ -303,10 +400,10 @@ const Sales = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Total de Hoy</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">Bs.{todayTotal.toFixed(2)}</div>
+            <div className="text-2xl">Bs. {todayTotal.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               Ingresos del día
             </p>
