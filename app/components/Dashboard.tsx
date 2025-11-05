@@ -27,7 +27,7 @@ const Dashboard = () => {
     },
     {
       title: "Ventas del Mes",
-      value: "$125,430",
+      value: "Bs.125,430",
       icon: ShoppingCart,
       description: "+8% del mes anterior",
       trend: "up"
