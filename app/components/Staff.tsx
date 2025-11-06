@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent, CardHeader } from "./ui/card";
@@ -20,13 +20,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -34,63 +27,103 @@ import { Plus, Search, Edit, Trash2, Mail, Phone } from "lucide-react";
 
 const Staff = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [staff, setStaff] = useState([
-    {
-      id: 1,
-      name: "Laura Sánchez",
-      role: "Gerente General",
-      email: "laura.sanchez@catefarm.com",
-      phone: "+52 55 1111 2222",
-      department: "Administración",
-      status: "Activo",
-      initials: "LS"
-    },
-    {
-      id: 2,
-      name: "Roberto Flores",
-      role: "Supervisor de Inventario",
-      email: "roberto.flores@catefarm.com",
-      phone: "+52 55 3333 4444",
-      department: "Logística",
-      status: "Activo",
-      initials: "RF"
-    },
-    {
-      id: 3,
-      name: "Patricia Ramos",
-      role: "Responsable de Compras",
-      email: "patricia.ramos@catefarm.com",
-      phone: "+52 55 5555 6666",
-      department: "Compras",
-      status: "Activo",
-      initials: "PR"
-    },
-    {
-      id: 4,
-      name: "Miguel Torres",
-      role: "Contador",
-      email: "miguel.torres@catefarm.com",
-      phone: "+52 55 7777 8888",
-      department: "Finanzas",
-      status: "Activo",
-      initials: "MT"
-    },
-    {
-      id: 5,
-      name: "Carmen Díaz",
-      role: "Coordinadora de Atención al Cliente",
-      email: "carmen.diaz@catefarm.com",
-      phone: "+52 55 9999 0000",
-      department: "Servicio al Cliente",
-      status: "Vacaciones",
-      initials: "CD"
+  const [staff, setStaff] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  
+  const handleAddEmployee = async () => {
+    if (!name || !role || !email || !phone) {
+      alert("Por favor, completa todos los campos");
+      return;
     }
-  ]);
 
-  const filteredStaff = staff.filter(person =>
-    person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    person.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    person.department.toLowerCase().includes(searchTerm.toLowerCase())
+    const newEmployee = {
+      nombre: name,
+      rol: role,
+      email: email,
+      telefono: phone,
+      estado: "Activo", // puedes cambiarlo según necesites
+    };
+
+    try {
+      const response = await fetch("https://690a052a1a446bb9cc2104c7.mockapi.io/Usuarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newEmployee),
+      });
+
+      if (!response.ok) throw new Error("Error al guardar el empleado");
+      const created = await response.json();
+
+      setStaff((prev) => [
+        ...prev,
+        {
+          id: created.id,
+          name: created.nombre,
+          role: created.rol,
+          email: created.email,
+          phone: created.telefono,
+          status: created.estado,
+          initials: created.nombre
+            .split(" ")
+            .map((n: string) => n[0])
+            .join("")
+            .toUpperCase(),
+        },
+      ]);
+
+      // Limpiar campos
+      setName("");
+      setRole("");
+      setEmail("");
+      setPhone("");
+      alert("Empleado agregado correctamente");
+    } catch (error) {
+      console.error("Error al agregar empleado:", error);
+      }
+    };
+
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const response = await fetch("https://690a052a1a446bb9cc2104c7.mockapi.io/Usuarios");
+        if (!response.ok) throw new Error("Error al obtener datos");
+        const data = await response.json();
+
+        const formattedData = data.map((user: any) => ({
+          id: user.id,
+          name: user.nombre,
+          role: user.rol,
+          email: user.email,
+          phone: user.telefono,
+          status: user.estado,
+          initials: user.nombre
+            .split(" ")
+            .map((n: string) => n[0])
+            .join("")
+            .toUpperCase(),
+        }));
+
+        setStaff(formattedData);
+      } catch (error) {
+        console.error("Error cargando datos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStaff();
+  }, []);
+
+
+  const filteredStaff = staff.filter(
+    (person) =>
+      person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      person.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -99,9 +132,10 @@ const Staff = () => {
         <div>
           <h1>Personal Administrativo</h1>
           <p className="text-muted-foreground">
-            Gestiona el personal de la organizacion
+            Gestiona el personal de la organización
           </p>
         </div>
+
         <Dialog>
           <DialogTrigger asChild>
             <Button className="gap-2">
@@ -116,61 +150,55 @@ const Staff = () => {
                 Completa la información del empleado
               </DialogDescription>
             </DialogHeader>
+
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="staffName">Nombre Completo</Label>
-                  <Input id="staffName" placeholder="Ej: Juan Pérez López" />
+                  <Input
+                    id="staffName"
+                    placeholder="Ej: Juan Pérez López"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="staffRole">Puesto</Label>
-                  <Input id="staffRole" placeholder="Ej: Gerente de Ventas" />
+                  <Input
+                    id="staffRole"
+                    placeholder="Ej: Gerente de Ventas"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                  />
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="staffEmail">Correo Electrónico</Label>
-                  <Input id="staffEmail" type="email" placeholder="empleado@catefarm.com" />
+                  <Input
+                    id="staffEmail"
+                    type="email"
+                    placeholder="empleado@catefarm.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="staffPhone">Teléfono</Label>
-                  <Input id="staffPhone" placeholder="+52 55 1234 5678" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="department">Departamento</Label>
-                  <Select>
-                    <SelectTrigger id="department">
-                      <SelectValue placeholder="Seleccionar departamento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Administración</SelectItem>
-                      <SelectItem value="logistics">Logística</SelectItem>
-                      <SelectItem value="purchases">Compras</SelectItem>
-                      <SelectItem value="finance">Finanzas</SelectItem>
-                      <SelectItem value="customer">Servicio al Cliente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="staffStatus">Estado</Label>
-                  <Select>
-                    <SelectTrigger id="staffStatus">
-                      <SelectValue placeholder="Seleccionar estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Activo</SelectItem>
-                      <SelectItem value="vacation">Vacaciones</SelectItem>
-                      <SelectItem value="inactive">Inactivo</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    id="staffPhone"
+                    placeholder="+591 78218688"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
+
             <DialogFooter>
               <Button variant="outline">Cancelar</Button>
-              <Button>Guardar Empleado</Button>
+              <Button onClick={handleAddEmployee}>Guardar Empleado</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -190,64 +218,75 @@ const Staff = () => {
             </div>
           </div>
         </CardHeader>
+
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Empleado</TableHead>
-                <TableHead>Puesto</TableHead>
-                <TableHead>Departamento</TableHead>
-                <TableHead>Contacto</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStaff.map((person) => (
-                <TableRow key={person.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {person.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>{person.name}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{person.role}</TableCell>
-                  <TableCell>{person.department}</TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1 text-sm">
-                        <Mail className="h-3 w-3" />
-                        {person.email}
-                      </div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Phone className="h-3 w-3" />
-                        {person.phone}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={person.status === 'Activo' ? 'default' : 'secondary'}>
-                      {person.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {loading ? (
+            <p className="text-center text-muted-foreground py-6">
+              Cargando empleados...
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Empleado</TableHead>
+                  <TableHead>Puesto</TableHead>
+                  <TableHead>Contacto</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredStaff.map((person) => (
+                  <TableRow key={person.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            {person.initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>{person.name}</div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell>{person.role}</TableCell>
+
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-sm">
+                          <Mail className="h-3 w-3" />
+                          {person.email}
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Phone className="h-3 w-3" />
+                          {person.phone}
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <Badge
+                        variant={person.status === "Activo" ? "default" : "secondary"}
+                      >
+                        {person.status}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
