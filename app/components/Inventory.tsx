@@ -40,8 +40,8 @@ const Inventory = () => {
   const [name, setName] = useState("");
   const [categoria, setCategoria] = useState("");//LISTO
   const [proveedor, setProveedor] = useState("");
-  const [stock, setStock] = useState<number>(0);
-  const [precio, setPrecio] = useState<number>(0);
+  const [stock, setStock] = useState("");
+  const [precio, setPrecio] = useState("");
   const [caducidad, setCaducidad] = useState("");
   const [estado, setEstado] = useState("Activo");
 
@@ -112,8 +112,8 @@ const Inventory = () => {
     setName("");
     setCategoria("");
     setProveedor("");
-    setStock(0);
-    setPrecio(0);
+    setStock("");
+    setPrecio("");
     setCaducidad("");
     setEstado("Activo");
   };
@@ -184,14 +184,14 @@ const Inventory = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="stock">Stock Actual</Label>
-                  <Input id="stock" type="number" value={stock} onChange={(e) => setStock(Number(e.target.value))} />
+                  <Input id="stock" type="number" value={stock} onChange={(e) => setStock(e.target.value)} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="price">Precio Unitario</Label>
-                  <Input id="price" type="number" value={precio} onChange={(e) => setPrecio(Number(e.target.value))} />
+                  <Input id="price" type="number" value={precio} onChange={(e) => setPrecio(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expiry">Fecha de Caducidad</Label>
@@ -260,7 +260,7 @@ const Inventory = () => {
                   <TableCell>{product.name}</TableCell>
                   <TableCell>{product.categoria}</TableCell>
                   <TableCell>{product.stock}</TableCell>
-                  <TableCell>Bs.{Number(product.precio).toFixed(2)}</TableCell>
+                  <TableCell>{product.precio}</TableCell>
                   <TableCell>{product.proveedor}</TableCell>
                   <TableCell>{product.caducidad}</TableCell>
                   <TableCell>
