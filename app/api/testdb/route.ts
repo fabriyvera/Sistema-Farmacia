@@ -1,13 +1,19 @@
-import { NextResponse } from "next/server";
-import { getConnection } from "@/lib/db";
+import { connectDB } from '@/lib/db';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const pool = await getConnection();
-    const result = await pool.request().query("SELECT GETDATE() as date;");
-    return NextResponse.json({ success: true, date: result.recordset[0].date });
-  } catch (error) {
-    console.error("Error SQL:", error);
-    return NextResponse.json({ success: false, error });
+    const pool = await connectDB();
+    const result = await pool.request().query('SELECT @@VERSION as version');
+    
+    return NextResponse.json({ 
+      success: true, 
+      version: result.recordset[0].version 
+    });
+  } catch (error: any) {
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message 
+    }, { status: 500 });
   }
 }

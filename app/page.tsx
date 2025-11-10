@@ -1,89 +1,158 @@
-"use client";
+'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-export default function LoginPage() {
+export default function HomePage() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const router = useRouter();
-  const [tipo, setTipo] = useState("admin"); // por defecto
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
+  // Verificar si ya hay una sesión activa al cargar la página
+  useEffect(() => {
+    const userData = sessionStorage.getItem('user');
+    const userType = sessionStorage.getItem('userType');
+    
+    if (userData && userType) {
+      setUser(JSON.parse(userData));
+      // Redirigir según el tipo de usuario
+      if (userType === 'admin') {
+        router.push('./admin');
+      } else {
+        router.push('./cliente');
+      }
+    }
+  }, [router]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setLoading(true);
 
     try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, tipo }),
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json();
+      const data = await response.json();
 
       if (data.success) {
-        if (tipo === "admin") {
-          router.push("/admin");
+        // Guardar información del usuario en sessionStorage
+        sessionStorage.setItem('user', JSON.stringify(data.user));
+        sessionStorage.setItem('userType', data.userType);
+        
+        // Redirigir según el tipo de usuario
+        if (data.userType === 'admin') {
+          router.push('./admin');
         } else {
-          router.push("/cliente");
+          router.push('./cliente');
         }
       } else {
-        setError(data.message);
+        alert('Error: ' + data.error);
       }
-    } catch (err) {
-      setError("Error al intentar iniciar sesión");
+    } catch (error) {
+      alert('Error de conexión');
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Si ya hay usuario, mostrar información breve
+  if (user) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h1>Bienvenido a Farmacia App</h1>
+        <p>Redirigiendo a tu panel...</p>
+        <button 
+          onClick={() => {
+            sessionStorage.clear();
+            setUser(null);
+          }}
+          style={{ marginTop: '20px', padding: '10px' }}
+        >
+          Cerrar Sesión
+        </button>
+      </div>
+    );
+  }
+
+  // Mostrar formulario de login si no hay usuario
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="bg-white shadow-lg rounded-2xl p-10 w-full max-w-sm text-center">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">
-          Iniciar Sesión
-        </h1>
-
-        <form onSubmit={handleLogin} className="flex flex-col gap-4 text-left">
-          <label className="text-gray-600 text-sm">Tipo de usuario</label>
-          <select
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value)}
-            className="border rounded-lg p-2"
-          >
-            <option value="admin">Administrador</option>
-            <option value="cliente">Cliente</option>
-          </select>
-
-          <label className="text-gray-600 text-sm">Usuario</label>
+    <div style={{ 
+      maxWidth: '400px', 
+      margin: '50px auto', 
+      padding: '20px',
+      border: '1px solid #ddd',
+      borderRadius: '8px'
+    }}>
+      <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>
+        Farmacia App - Login
+      </h1>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px' }}>
+            Usuario:
+          </label>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            required
+            style={{ 
+              width: '100%', 
+              padding: '10px', 
+              border: '1px solid #ccc',
+              borderRadius: '4px'
+            }}
             placeholder="Ingresa tu usuario"
-            className="border rounded-lg p-2"
           />
-
-          <label className="text-gray-600 text-sm">Contraseña</label>
+        </div>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '5px' }}>
+            Contraseña:
+          </label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{ 
+              width: '100%', 
+              padding: '10px', 
+              border: '1px solid #ccc',
+              borderRadius: '4px'
+            }}
             placeholder="Ingresa tu contraseña"
-            className="border rounded-lg p-2"
           />
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          <button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg mt-2"
-          >
-            Iniciar sesión
-          </button>
-        </form>
+        </div>
+        <button 
+          type="submit" 
+          disabled={loading}
+          style={{ 
+            width: '100%', 
+            padding: '12px', 
+            backgroundColor: '#0070f3', 
+            color: 'white', 
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '16px',
+            cursor: loading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+        </button>
+      </form>
+      
+      {/* Información de prueba */}
+      <div style={{ marginTop: '30px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+        <h3 style={{ marginBottom: '10px' }}>Credenciales de prueba:</h3>
+        <p><strong>Administrador:</strong> admin01 / AdminPass2025!</p>
+        <p><strong>Cliente:</strong> cmendoza / 12345</p>
       </div>
-    </main>
+    </div>
   );
 }
