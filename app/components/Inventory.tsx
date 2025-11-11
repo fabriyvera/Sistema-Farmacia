@@ -260,7 +260,7 @@ const Inventory = () => {
                   <TableCell>{product.name}</TableCell>
                   <TableCell>{product.categoria}</TableCell>
                   <TableCell>{product.stock}</TableCell>
-                  <TableCell>{product.precio}</TableCell>
+                  <TableCell>{`Bs. ${product.precio}`}</TableCell>
                   <TableCell>{product.proveedor}</TableCell>
                   <TableCell>{product.caducidad}</TableCell>
                   <TableCell>

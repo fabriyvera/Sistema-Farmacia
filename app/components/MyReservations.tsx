@@ -1,9 +1,12 @@
+"use client";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
 import { ArrowLeft, BookmarkCheck, MapPin, Clock, X, CheckCircle2, Package } from "lucide-react";
-import type { Reservation } from "../cliente/page";
+import { useEffect, useState } from "react";
+import { apiService } from "@/lib/api";
+import { Reserva, Producto, Product, Reservation } from "@/types/reservas";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,15 +20,94 @@ import {
 } from "./ui/alert-dialog";
 
 interface MyReservationsProps {
-  reservations: Reservation[];
   onClose: () => void;
   onCancel: (reservationId: string) => void;
 }
 
-const MyReservations = ({ reservations, onClose, onCancel }: MyReservationsProps) => {
-  const activeReservations = reservations.filter(r => r.status === "active");
-  const pastReservations = reservations.filter(r => r.status !== "active");
+const MyReservations = ({ onClose, onCancel }: MyReservationsProps) => {
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // Convertir Reserva API a Reservation para el cliente
+  const convertReservaToReservation = (reserva: Reserva, producto: Producto): Reservation => {
+    const reservationDate = new Date(reserva.createdAt);
+    const expiryDate = new Date(reservationDate.getTime() + 24 * 60 * 60 * 1000); // 24 horas después
+
+    return {
+      id: reserva.id,
+      product: {
+        id: producto.id,
+        name: producto.name,
+        category: producto.categoria,
+        price: parseFloat(producto.precio),
+        image: producto.imagen,
+        stock: parseInt(producto.stock),
+        requiresPrescription: producto.recetaRequerida === "Si",
+        description: producto.descripcion,
+        activeIngredient: producto.descripcion.split('.')[0]
+      },
+      quantity: parseInt(reserva.cantidad),
+      pickupLocation: reserva.sucursalNombre || "Sucursal no especificada",
+      reservationDate: reserva.createdAt,
+      expiryDate: expiryDate.toISOString(),
+      status: reserva.estado === 'pendiente' ? 'active' : 
+              reserva.estado === 'completada' ? 'collected' : 'expired'
+    };
+  };
+
+  useEffect(() => {
+    const loadReservations = async () => {
+      try {
+        const [reservasData, productosData] = await Promise.all([
+          apiService.getReservas(),
+          apiService.getProductos()
+        ]);
+
+        // Filtrar reservas del cliente actual (en un sistema real, filtrar por clienteId)
+        const clienteReservas = reservasData; // Por ahora mostramos todas
+        
+        // Convertir reservas al formato del cliente
+        const clienteReservations = clienteReservas.map(reserva => {
+          const producto = productosData.find(p => p.id === reserva.productoId);
+          if (!producto) {
+            console.warn(`Producto no encontrado para reserva ${reserva.id}`);
+            return null;
+          }
+          return convertReservaToReservation(reserva, producto);
+        }).filter(Boolean) as Reservation[];
+
+        setReservations(clienteReservations);
+      } catch (error) {
+        console.error("Error loading reservations", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReservations();
+  }, []);
+
+  const handleCancel = async (reservationId: string) => {
+    try {
+      await apiService.updateReserva(reservationId, {
+        estado: 'cancelada'
+      });
+      onCancel(reservationId);
+      // Recargar reservas
+      const reservasData = await apiService.getReservas();
+      const productosData = await apiService.getProductos();
+      const updatedReservations = reservasData.map(reserva => {
+        const producto = productosData.find(p => p.id === reserva.productoId);
+        return producto ? convertReservaToReservation(reserva, producto) : null;
+      }).filter(Boolean) as Reservation[];
+      setReservations(updatedReservations);
+    } catch (error) {
+      console.error("Error canceling reservation", error);
+      alert("Error al cancelar la reserva");
+    }
+  };
+
+  // Funciones auxiliares
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("es-MX", {
@@ -56,8 +138,38 @@ const MyReservations = ({ reservations, onClose, onCancel }: MyReservationsProps
         return <Badge variant="secondary">Expirada</Badge>;
       case "collected":
         return <Badge variant="outline">Recogida</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
     }
   };
+
+  // Filtrar reservas
+  const activeReservations = reservations.filter(r => r.status === "active");
+  const pastReservations = reservations.filter(r => r.status !== "active");
+
+  if (loading) {
+    return (
+      <div className="min-h-full bg-white flex flex-col">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h2 className="text-lg">Mis Reservas</h2>
+          </div>
+          <Badge variant="secondary">
+            Cargando...
+          </Badge>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <p>Cargando reservas...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full bg-white flex flex-col">
@@ -170,7 +282,7 @@ const MyReservations = ({ reservations, onClose, onCancel }: MyReservationsProps
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>No cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => onCancel(reservation.id)}>
+                              <AlertDialogAction onClick={() => handleCancel(reservation.id)}>
                                 Sí, cancelar
                               </AlertDialogAction>
                             </AlertDialogFooter>

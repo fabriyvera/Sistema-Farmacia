@@ -2,84 +2,55 @@
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Star, Percent, TrendingUp, Clock } from "lucide-react";
-import type { Product } from "../cliente/page";
+import { useEffect, useState } from "react";
+import { apiService } from "@/lib/api";
+import { Producto, Product } from "@/types/reservas";
 
 interface HomeViewProps {
   onSelectProduct: (product: Product) => void;
 }
 
 const HomeView = ({ onSelectProduct }: HomeViewProps) => {
-  const featuredProducts: Product[] = [
-    {
-      id: 1,
-      name: "Paracetamol 500mg",
-      category: "Analgésicos",
-      price: 25.50,
-      image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400",
-      stock: 450,
-      requiresPrescription: false,
-      description: "Analgésico y antipirético para alivio del dolor y fiebre",
-      activeIngredient: "Paracetamol 500mg"
-    },
-    {
-      id: 2,
-      name: "Ibuprofeno 400mg",
-      category: "Antiinflamatorios",
-      price: 35.00,
-      image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400",
-      stock: 320,
-      requiresPrescription: false,
-      description: "Antiinflamatorio no esteroideo para dolor e inflamación",
-      activeIngredient: "Ibuprofeno 400mg"
-    },
-    {
-      id: 3,
-      name: "Vitamina C 1000mg",
-      category: "Vitaminas",
-      price: 45.00,
-      image: "https://images.unsplash.com/photo-1550572017-4240c1baaf90?w=400",
-      stock: 500,
-      requiresPrescription: false,
-      description: "Suplemento vitamínico para fortalecer el sistema inmune",
-      activeIngredient: "Ácido ascórbico 1000mg"
-    },
-    {
-      id: 4,
-      name: "Omeprazol 20mg",
-      category: "Antiulcerosos",
-      price: 55.00,
-      image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400",
-      stock: 280,
-      requiresPrescription: true,
-      description: "Inhibidor de bomba de protones para úlceras y reflujo",
-      activeIngredient: "Omeprazol 20mg"
-    }
-  ];
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [discountProducts, setDiscountProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const discountProducts: Product[] = [
-    {
-      id: 5,
-      name: "Loratadina 10mg",
-      category: "Antihistamínicos",
-      price: 28.00,
-      image: "https://images.unsplash.com/photo-1603349206295-dde20617cb6a?w=400",
-      stock: 200,
-      requiresPrescription: false,
-      description: "Antihistamínico para alergias estacionales",
-      activeIngredient: "Loratadina 10mg"
-    },
-    {
-      id: 6,
-      name: "Metformina 850mg",
-      category: "Antidiabéticos",
-      price: 45.00,
-      image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400",
-      stock: 380,
-      requiresPrescription: true,
-      description: "Antidiabético oral para control de glucosa",
-      activeIngredient: "Metformina 850mg"
-    }
-  ];
+  // Convertir Producto API a Product para el cliente
+  const convertProductoToProduct = (producto: Producto): Product => ({
+    id: producto.id,
+    name: producto.name,
+    category: producto.categoria,
+    price: parseFloat(producto.precio),
+    image: producto.imagen,
+    stock: parseInt(producto.stock),
+    requiresPrescription: producto.recetaRequerida === "Si",
+    description: producto.descripcion,
+    activeIngredient: producto.descripcion.split('.')[0] // Usar primera parte de la descripción
+  });
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const productos = await apiService.getProductos();
+        
+        // Convertir productos de API a formato de cliente
+        const products = productos.map(convertProductoToProduct);
+        
+        // Productos destacados (primeros 4)
+        setFeaturedProducts(products.slice(0, 4));
+        
+        // Productos en oferta (podrías filtrar por algún criterio)
+        setDiscountProducts(products.slice(4, 6));
+        
+      } catch (error) {
+        console.error("Error loading products", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   const categories = [
     { name: "Analgésicos", icon: "💊", color: "bg-red-100 text-red-700" },
@@ -87,6 +58,14 @@ const HomeView = ({ onSelectProduct }: HomeViewProps) => {
     { name: "Antibióticos", icon: "🔬", color: "bg-blue-100 text-blue-700" },
     { name: "Digestivos", icon: "🫀", color: "bg-purple-100 text-purple-700" }
   ];
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p>Cargando productos...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-4">
@@ -122,35 +101,32 @@ const HomeView = ({ onSelectProduct }: HomeViewProps) => {
           <Star className="h-5 w-5 text-primary" />
           <h3>Productos Destacados</h3>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-3">
           {featuredProducts.map((product) => (
             <Card
               key={product.id}
-              className="overflow-hidden cursor-pointer transition-shadow hover:shadow-lg"
+              className="cursor-pointer transition-shadow hover:shadow-md"
               onClick={() => onSelectProduct(product)}
             >
-              <div className="relative">
+              <CardContent className="p-3 flex gap-3">
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-32 object-cover"
+                  className="w-20 h-20 object-cover rounded-lg"
                 />
-                {product.requiresPrescription && (
-                  <Badge className="absolute top-2 right-2 bg-red-500 text-xs">
-                    Receta
-                  </Badge>
-                )}
-              </div>
-              <CardContent className="p-3">
-                <p className="text-sm mb-1 line-clamp-2">{product.name}</p>
-                <p className="text-xs text-muted-foreground mb-2">
-                  {product.category}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-primary">${product.price.toFixed(2)}</span>
-                  <Badge variant="outline" className="text-xs">
-                    Stock: {product.stock}
-                  </Badge>
+                <div className="flex-1">
+                  <p className="text-sm mb-1">{product.name}</p>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {product.category}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-primary">${product.price.toFixed(2)}</span>
+                    {product.requiresPrescription && (
+                      <Badge variant="destructive" className="text-xs">
+                        Receta
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

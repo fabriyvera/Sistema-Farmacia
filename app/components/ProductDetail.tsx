@@ -1,5 +1,5 @@
 "use client";
-import { use, useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -7,36 +7,81 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { ArrowLeft, BookmarkCheck, Plus, Minus, AlertCircle, Check, MapPin } from "lucide-react";
-import type { Product } from "../cliente/page";
+import { Product, Sucursal } from "@/types/reservas";
+import { apiService } from "@/lib/api";
 
 interface ProductDetailProps {
   product: Product;
   onBack: () => void;
-  onReserve: (product: Product, quantity: number, pickupLocation: string) => void;
+  onReserve: (product: Product, quantity: number, pickupLocation: string, sucursalId: string) => void;
 }
 
 const ProductDetail = ({ product, onBack, onReserve }: ProductDetailProps) => {
   const [quantity, setQuantity] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showReserveDialog, setShowReserveDialog] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState("sucursal-centro");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const pharmacyLocations = [
-    { id: "sucursal-centro", name: "Sucursal Centro", address: "Av. Principal 123, Centro" },
-    { id: "sucursal-norte", name: "Sucursal Norte", address: "Calle Norte 456, Zona Norte" },
-    { id: "sucursal-sur", name: "Sucursal Sur", address: "Av. Sur 789, Zona Sur" },
-    { id: "sucursal-plaza", name: "Sucursal Plaza Comercial", address: "Plaza Mayor, Local 45" }
-  ];
+  useEffect(() => {
+    const loadSucursales = async () => {
+      try {
+        const sucursalesData = await apiService.getSucursales();
+        // Filtrar solo sucursales activas
+        const sucursalesActivas = sucursalesData.filter(s => s.estado === "Activo");
+        setSucursales(sucursalesActivas);
+        if (sucursalesActivas.length > 0) {
+          setSelectedLocation(sucursalesActivas[0].id);
+        }
+      } catch (error) {
+        console.error("Error loading sucursales", error);
+      }
+    };
 
-  const handleReserve = () => {
-    const location = pharmacyLocations.find(loc => loc.id === selectedLocation);
-    onReserve(product, quantity, location?.name || "");
-    setShowReserveDialog(false);
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      onBack();
-    }, 2000);
+    loadSucursales();
+  }, []);
+
+  const handleReserve = async () => {
+    setLoading(true);
+    try {
+      const sucursal = sucursales.find(s => s.id === selectedLocation);
+      if (!sucursal) {
+        alert("Error: No se encontró la sucursal seleccionada");
+        return;
+      }
+
+      // Crear reserva en la API
+      const reservaData = {
+        productoId: product.id,
+        fecha: new Date().toISOString(),
+        cantidad: quantity.toString(),
+        estado: 'pendiente' as const,
+        createdAt: new Date().toISOString(),
+        sucursalId: selectedLocation,
+        sucursalNombre: sucursal.nombre,
+        clienteId: '1', // En un sistema real, esto vendría del usuario logueado
+        clienteNombre: 'Cliente Demo' // En un sistema real, esto vendría del usuario logueado
+      };
+
+      await apiService.createReserva(reservaData);
+      
+      // Llamar a la función del padre
+      onReserve(product, quantity, sucursal.nombre, selectedLocation);
+      setShowReserveDialog(false);
+      setShowSuccess(true);
+      
+      setTimeout(() => {
+        setShowSuccess(false);
+        onBack();
+      }, 2000);
+      
+    } catch (error) {
+      console.error("Error creating reservation", error);
+      alert("Error al crear la reserva");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const incrementQuantity = () => {
@@ -232,15 +277,16 @@ const ProductDetail = ({ product, onBack, onReserve }: ProductDetailProps) => {
           <div className="py-4">
             <RadioGroup value={selectedLocation} onValueChange={setSelectedLocation}>
               <div className="space-y-3">
-                {pharmacyLocations.map((location) => (
-                  <div key={location.id} className="flex items-start space-x-3">
-                    <RadioGroupItem value={location.id} id={location.id} className="mt-1" />
-                    <Label htmlFor={location.id} className="flex-1 cursor-pointer">
+                {sucursales.map((sucursal) => (
+                  <div key={sucursal.id} className="flex items-start space-x-3">
+                    <RadioGroupItem value={sucursal.id} id={sucursal.id} className="mt-1" />
+                    <Label htmlFor={sucursal.id} className="flex-1 cursor-pointer">
                       <div className="flex items-start gap-2">
                         <MapPin className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm mb-1">{location.name}</p>
-                          <p className="text-xs text-muted-foreground">{location.address}</p>
+                          <p className="text-sm mb-1">{sucursal.nombre}</p>
+                          <p className="text-xs text-muted-foreground">{sucursal.direccion}</p>
+                          <p className="text-xs text-muted-foreground">{sucursal.telefono}</p>
                         </div>
                       </div>
                     </Label>
@@ -266,9 +312,9 @@ const ProductDetail = ({ product, onBack, onReserve }: ProductDetailProps) => {
             <Button variant="outline" onClick={() => setShowReserveDialog(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleReserve} className="gap-2">
+            <Button onClick={handleReserve} disabled={loading} className="gap-2">
               <BookmarkCheck className="h-4 w-4" />
-              Confirmar Reserva
+              {loading ? "Creando reserva..." : "Confirmar Reserva"}
             </Button>
           </DialogFooter>
         </DialogContent>

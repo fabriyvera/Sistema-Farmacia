@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Search, X, Clock } from "lucide-react";
-import type { Product } from "../cliente/page";
+import { apiService } from "@/lib/api";
+import { Producto, Product } from "@/types/reservas";
 
 interface SearchViewProps {
   onSelectProduct: (product: Product) => void;
@@ -12,120 +13,45 @@ interface SearchViewProps {
 
 const SearchView = ({ onSelectProduct }: SearchViewProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [recentSearches, setRecentSearches] = useState([
-    "Paracetamol",
-    "Vitamina C",
-    "Ibuprofeno"
-  ]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const allProducts: Product[] = [
-    {
-      id: 1,
-      name: "Paracetamol 500mg",
-      category: "Analgésicos",
-      price: 25.50,
-      image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400",
-      stock: 450,
-      requiresPrescription: false,
-      description: "Analgésico y antipirético para alivio del dolor y fiebre",
-      activeIngredient: "Paracetamol 500mg"
-    },
-    {
-      id: 2,
-      name: "Ibuprofeno 400mg",
-      category: "Antiinflamatorios",
-      price: 35.00,
-      image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400",
-      stock: 320,
-      requiresPrescription: false,
-      description: "Antiinflamatorio no esteroideo",
-      activeIngredient: "Ibuprofeno 400mg"
-    },
-    {
-      id: 3,
-      name: "Vitamina C 1000mg",
-      category: "Vitaminas",
-      price: 45.00,
-      image: "https://images.unsplash.com/photo-1550572017-4240c1baaf90?w=400",
-      stock: 500,
-      requiresPrescription: false,
-      description: "Suplemento vitamínico",
-      activeIngredient: "Ácido ascórbico 1000mg"
-    },
-    {
-      id: 4,
-      name: "Omeprazol 20mg",
-      category: "Antiulcerosos",
-      price: 55.00,
-      image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400",
-      stock: 280,
-      requiresPrescription: true,
-      description: "Inhibidor de bomba de protones",
-      activeIngredient: "Omeprazol 20mg"
-    },
-    {
-      id: 5,
-      name: "Loratadina 10mg",
-      category: "Antihistamínicos",
-      price: 28.00,
-      image: "https://images.unsplash.com/photo-1603349206295-dde20617cb6a?w=400",
-      stock: 200,
-      requiresPrescription: false,
-      description: "Antihistamínico para alergias",
-      activeIngredient: "Loratadina 10mg"
-    },
-    {
-      id: 6,
-      name: "Metformina 850mg",
-      category: "Antidiabéticos",
-      price: 45.00,
-      image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400",
-      stock: 380,
-      requiresPrescription: true,
-      description: "Antidiabético oral",
-      activeIngredient: "Metformina 850mg"
-    },
-    {
-      id: 7,
-      name: "Aspirina 100mg",
-      category: "Analgésicos",
-      price: 18.00,
-      image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400",
-      stock: 350,
-      requiresPrescription: false,
-      description: "Analgésico y antiagregante",
-      activeIngredient: "Ácido acetilsalicílico 100mg"
-    },
-    {
-      id: 8,
-      name: "Vitamina D3 2000 UI",
-      category: "Vitaminas",
-      price: 52.00,
-      image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400",
-      stock: 280,
-      requiresPrescription: false,
-      description: "Suplemento de vitamina D",
-      activeIngredient: "Colecalciferol 2000 UI"
-    },
-    {
-      id: 10,
-      name: "Amoxicilina 500mg",
-      category: "Antibióticos",
-      price: 85.00,
-      image: "https://images.unsplash.com/photo-1603349206295-dde20617cb6a?w=400",
-      stock: 180,
-      requiresPrescription: true,
-      description: "Antibiótico de amplio espectro",
-      activeIngredient: "Amoxicilina 500mg"
-    }
-  ];
+  // Convertir Producto API a Product para el cliente
+  const convertProductoToProduct = (producto: Producto): Product => ({
+    id: producto.id,
+    name: producto.name,
+    category: producto.categoria,
+    price: parseFloat(producto.precio),
+    image: producto.imagen,
+    stock: parseInt(producto.stock),
+    requiresPrescription: producto.recetaRequerida === "Si",
+    description: producto.descripcion,
+    activeIngredient: producto.descripcion.split('.')[0]
+  });
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const productos = await apiService.getProductos();
+        const products = productos.map(convertProductoToProduct);
+        setAllProducts(products);
+      } catch (error) {
+        console.error("Error loading products", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   const filteredProducts = searchQuery
     ? allProducts.filter(
         (product) =>
           product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.activeIngredient.toLowerCase().includes(searchQuery.toLowerCase())
+          product.description.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
 
@@ -139,6 +65,15 @@ const SearchView = ({ onSelectProduct }: SearchViewProps) => {
   const clearSearch = () => {
     setSearchQuery("");
   };
+   if (loading) {
+    return (
+      <div className="p-4">
+        <div className="flex justify-center items-center h-32">
+          <p>Cargando productos...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-4">

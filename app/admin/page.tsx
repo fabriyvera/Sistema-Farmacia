@@ -31,11 +31,17 @@ import Inventory from "../components/Inventory";
 import Customers from "../components/Customers";
 import Reports from "../components/Reports";
 import Sales from "../components/Sales";
+import BranchManagement from "../components/BranchManagement";
 
 const App = () => {
-  const [activeView, setActiveView] = useState("dashboard");
+  const [activeView, setActiveView] = useState("sales");
 
   const menuItems = [
+    {
+      id: "sales",      
+      title: "Ventas",
+      icon: ShoppingCart,
+    },
     {
       id: "dashboard",
       title: "Panel de Control",
@@ -67,14 +73,17 @@ const App = () => {
       icon: FileText,
     },
     {
-      id: "sales",      
-      title: "Ventas",
-      icon: ShoppingCart,
+      id: "branch-management",
+      title: "Gestión de Sucursales",
+      icon: Building2,
     }
+    
   ];
 
   const renderView = () => {
     switch (activeView) {
+      case "sales":
+        return <Sales/>;
       case "dashboard":
         return <Dashboard />;
       case "suppliers":
@@ -87,8 +96,8 @@ const App = () => {
         return <Customers />;
       case "reports":
         return <Reports/>;
-      case "sales":
-        return <Sales/>;
+      case "branch-management":
+        return <BranchManagement/>;
       default:
         return <Dashboard />;
     }
