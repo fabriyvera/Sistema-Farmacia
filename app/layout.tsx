@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   description: "Sistema para cadena de farmacias",
 };
 
+
 export default function RootLayout({
   children,
 }: {
@@ -24,12 +25,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-gray-50 text-gray-900 min-h-screen`}
-      >
-        <div className="flex flex-col min-h-screen">
-          {children}
-        </div>
+      <body className="antialiased">
+        {children}
       </body>
     </html>
   );
