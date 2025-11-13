@@ -136,7 +136,7 @@ const ProductDetail = ({ product, onBack, onReserve }: ProductDetailProps) => {
               </Badge>
             </div>
             <div className="text-right">
-              <p className="text-2xl text-primary">${product.price.toFixed(2)}</p>
+              <p className="text-2xl text-primary">Bs. {product.price.toFixed(2)}</p>
               <p className="text-sm text-muted-foreground">por unidad</p>
             </div>
           </div>
@@ -215,7 +215,7 @@ const ProductDetail = ({ product, onBack, onReserve }: ProductDetailProps) => {
               <div className="flex-1 text-right">
                 <p className="text-sm text-muted-foreground">Total</p>
                 <p className="text-xl text-primary">
-                  ${(product.price * quantity).toFixed(2)}
+                  Bs. {(product.price * quantity).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -304,7 +304,7 @@ const ProductDetail = ({ product, onBack, onReserve }: ProductDetailProps) => {
               {quantity} x {product.name}
             </p>
             <p className="text-sm text-orange-800">
-              Total: ${(product.price * quantity).toFixed(2)}
+              Total: Bs. {(product.price * quantity).toFixed(2)}
             </p>
           </div>
 

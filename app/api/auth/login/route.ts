@@ -6,7 +6,6 @@ export async function POST(request: Request) {
     const { username, password } = await request.json();
     const pool = await connectDB();
 
-    // Buscar en usuarios (administradores)
     const usuarioResult = await pool.request()
       .input('username', username)
       .input('password', password)
@@ -20,7 +19,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Buscar en clientes
     const clienteResult = await pool.request()
       .input('username', username)
       .input('password', password)
@@ -39,10 +37,10 @@ export async function POST(request: Request) {
       error: 'Credenciales incorrectas'
     }, { status: 401 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: error instanceof Error ? error.message : 'Error desconocido'
     }, { status: 500 });
   }
 }

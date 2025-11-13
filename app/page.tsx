@@ -9,14 +9,13 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
-  // Verificar si ya hay una sesión activa al cargar la página
   useEffect(() => {
     const userData = sessionStorage.getItem('user');
     const userType = sessionStorage.getItem('userType');
     
     if (userData && userType) {
       setUser(JSON.parse(userData));
-      // Redirigir según el tipo de usuario
+
       if (userType === 'admin') {
         router.push('./admin');
       } else {
@@ -41,11 +40,9 @@ export default function HomePage() {
       const data = await response.json();
 
       if (data.success) {
-        // Guardar información del usuario en sessionStorage
         sessionStorage.setItem('user', JSON.stringify(data.user));
         sessionStorage.setItem('userType', data.userType);
         
-        // Redirigir según el tipo de usuario
         if (data.userType === 'admin') {
           router.push('./admin');
         } else {
@@ -61,7 +58,6 @@ export default function HomePage() {
     }
   };
 
-  // Si ya hay usuario, mostrar información breve
   if (user) {
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
@@ -80,7 +76,7 @@ export default function HomePage() {
     );
   }
 
-  // Mostrar formulario de login si no hay usuario
+  
   return (
     <div style={{ 
       maxWidth: '400px', 

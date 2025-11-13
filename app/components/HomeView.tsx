@@ -120,7 +120,7 @@ const HomeView = ({ onSelectProduct }: HomeViewProps) => {
                     {product.category}
                   </p>
                   <div className="flex items-center justify-between">
-                    <span className="text-primary">${product.price.toFixed(2)}</span>
+                    <span className="text-primary">Bs. {product.price.toFixed(2)}</span>
                     {product.requiresPrescription && (
                       <Badge variant="destructive" className="text-xs">
                         Receta
@@ -159,7 +159,7 @@ const HomeView = ({ onSelectProduct }: HomeViewProps) => {
                     {product.category}
                   </p>
                   <div className="flex items-center gap-2">
-                    <span className="text-primary">${product.price.toFixed(2)}</span>
+                    <span className="text-primary">Bs. {product.price.toFixed(2)}</span>
                     <Badge variant="secondary" className="text-xs">
                       -15% OFF
                     </Badge>
