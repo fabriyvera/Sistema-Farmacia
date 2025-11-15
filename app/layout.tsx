@@ -17,7 +17,6 @@ export const metadata: Metadata = {
   description: "Sistema para cadena de farmacias",
 };
 
-
 export default function RootLayout({
   children,
 }: {
@@ -25,8 +24,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className="antialiased">
-        {children}
+      <body className="antialiased min-h-screen flex flex-col">
+
+        {/* contenido general */}
+        <main className="flex-1">
+          {children}
+        </main>
+
+        {/* barra inferior SIEMPRE visible */}
+        <nav className="w-full h-16 border-t bg-white flex items-center justify-around shadow-md">
+          <a href="./HomeView" className="font-medium">Inicio</a>
+          <a href="./Categorias" className="font-medium">Categorías</a>
+          <a href="./Buscar" className="font-medium">Buscar</a>
+          <a href="./Configuracion" className="font-medium">Configuración</a>
+        </nav>
+
       </body>
     </html>
   );

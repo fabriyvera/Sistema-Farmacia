@@ -203,7 +203,7 @@ const ClientPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 max-w-md mx-auto">
+    <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-primary text-primary-foreground px-4 py-3 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-2">
@@ -236,7 +236,8 @@ const ClientPage = () => {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 px-2 py-2 shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 shadow-lg">
+
         <div className="flex justify-around items-center">
           <button
             onClick={() => {
@@ -301,9 +302,11 @@ const ClientPage = () => {
             <Settings className="h-5 w-5" />
             <span className="text-xs">Configuración</span>
           </button>
+          
         </div>
       </nav>
     </div>
+    
   );
 };
 
