@@ -39,7 +39,6 @@ const Customers = () => {
       registrationDate: "2024-01-15",
       totalPurchases: 15,
       totalSpent: 4850.00,
-      status: "Activo",
       initials: "MH"
     },
     {
@@ -51,7 +50,6 @@ const Customers = () => {
       registrationDate: "2024-03-22",
       totalPurchases: 8,
       totalSpent: 2340.00,
-      status: "Activo",
       initials: "JR"
     },
     {
@@ -63,7 +61,6 @@ const Customers = () => {
       registrationDate: "2023-11-10",
       totalPurchases: 32,
       totalSpent: 12450.00,
-      status: "VIP",
       initials: "AM"
     },
     {
@@ -75,7 +72,6 @@ const Customers = () => {
       registrationDate: "2024-06-05",
       totalPurchases: 5,
       totalSpent: 1250.00,
-      status: "Activo",
       initials: "CG"
     },
     {
@@ -87,7 +83,6 @@ const Customers = () => {
       registrationDate: "2024-02-18",
       totalPurchases: 22,
       totalSpent: 8920.00,
-      status: "VIP",
       initials: "SM"
     },
     {
@@ -99,7 +94,6 @@ const Customers = () => {
       registrationDate: "2024-08-30",
       totalPurchases: 2,
       totalSpent: 560.00,
-      status: "Nuevo",
       initials: "RS"
     }
   ]);
@@ -110,18 +104,6 @@ const Customers = () => {
     customer.phone.includes(searchTerm)
   );
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "VIP":
-        return "default";
-      case "Activo":
-        return "secondary";
-      case "Nuevo":
-        return "outline";
-      default:
-        return "secondary";
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -183,22 +165,7 @@ const Customers = () => {
             <div className="text-2xl">{customers.length}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="text-sm text-muted-foreground">Clientes VIP</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{customers.filter(c => c.status === 'VIP').length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="text-sm text-muted-foreground">Nuevos este Mes</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{customers.filter(c => c.status === 'Nuevo').length}</div>
-          </CardContent>
-        </Card>
+        
       </div>
 
       <Card>
@@ -225,8 +192,8 @@ const Customers = () => {
                 <TableHead>Registro</TableHead>
                 <TableHead>Compras</TableHead>
                 <TableHead>Total Gastado</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+
+
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -265,21 +232,8 @@ const Customers = () => {
                   <TableCell className="text-primary">
                     Bs. {customer.totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusColor(customer.status)}>
-                      {customer.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  
+                  
                 </TableRow>
               ))}
             </TableBody>

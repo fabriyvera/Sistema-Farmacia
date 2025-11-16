@@ -1,34 +1,70 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  let pool;
   try {
     const { username, password } = await request.json();
-    const pool = await connectDB();
 
-    const usuarioResult = await pool.request()
+    if (!username || !password) {
+      return NextResponse.json({
+        success: false,
+        error: 'Username y contraseña son requeridos'
+      }, { status: 400 });
+    }
+
+    pool = await connectDB();
+
+    // Buscar en administradores (adm_mst)
+    const adminResult = await pool.request()
       .input('username', username)
       .input('password', password)
-      .query('SELECT * FROM adm_mst WHERE nm_us = @username AND pw_us = @password AND st_us = 1');
+      .query(`
+        SELECT 
+          pk_adm as id,
+          nm_adm as username,
+          nms_adm as nombres,
+          app_adm as apPaterno,
+          apm_adm as apMaterno,
+          em_adm as email,
+          tl_adm as telefono,
+          ds_adm as direccion,
+          st_adm as activo,
+          fk_rl as rol,
+          fk_sc as sucursal
+        FROM adm_mst 
+        WHERE nm_adm = @username AND pw_adm = @password AND st_adm = 1
+      `);
 
-    if (usuarioResult.recordset.length > 0) {
+    if (adminResult.recordset.length > 0) {
       return NextResponse.json({
         success: true,
         userType: 'admin',
-        user: usuarioResult.recordset[0]
+        user: adminResult.recordset[0]
       });
     }
 
-    const clienteResult = await pool.request()
+    // Buscar en clientes (ct_mst)
+    const clientResult = await pool.request()
       .input('username', username)
       .input('password', password)
-      .query('SELECT * FROM ct_mst WHERE nm_ct = @username AND pw_ct = @password');
+      .query(`
+        SELECT 
+          pk_ct as id,
+          nm_ct as username,
+          nc_ct as nombreCompleto,
+          em_ct as email,
+          tl_ct as telefono,
+          ds_ct as direccion
+        FROM ct_mst 
+        WHERE nm_ct = @username AND pw_ct = @password
+      `);
 
-    if (clienteResult.recordset.length > 0) {
+    if (clientResult.recordset.length > 0) {
       return NextResponse.json({
         success: true,
         userType: 'client',
-        user: clienteResult.recordset[0]
+        user: clientResult.recordset[0]
       });
     }
 
@@ -38,9 +74,14 @@ export async function POST(request: Request) {
     }, { status: 401 });
 
   } catch (error: unknown) {
+    console.error('Error en login:', error);
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido'
     }, { status: 500 });
+  } finally {
+    if (pool) {
+      await pool.close();
+    }
   }
 }

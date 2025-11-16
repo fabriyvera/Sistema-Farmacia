@@ -12,99 +12,145 @@ import {
   SelectValue,
 } from "./ui/select";
 
-interface Employee {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  phone: string;
-  location?: string;
-  status: string;
+interface Admin {
+  pk_adm: string;
+  nm_adm: string;
+  nms_adm: string;
+  app_adm: string;
+  apm_adm: string;
+  fk_rl: number;
+  fk_sc: number;
+  st_adm: boolean;
+  em_adm: string;
+  tl_adm: string;
+  ds_adm: string;
 }
 
 const ModifyEmployee = () => {
-  const [staff, setStaff] = useState<Employee[]>([]);
-  const [selectedEmployee, setSelectedEmployee] = useState("");
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
+  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [selectedAdmin, setSelectedAdmin] = useState("");
+  const [username, setUsername] = useState("");
+  const [nombres, setNombres] = useState("");
+  const [apPaterno, setApPaterno] = useState("");
+  const [apMaterno, setApMaterno] = useState("");
+  const [rol, setRol] = useState("0");
+  const [sucursal, setSucursal] = useState("0");
+  const [estado, setEstado] = useState("1");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [location, setLocation] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [direccion, setDireccion] = useState("");
 
   useEffect(() => {
-    const fetchStaff = async () => {
+    const fetchAdmins = async () => {
       try {
-        const response = await fetch("https://690a052a1a446bb9cc2104c7.mockapi.io/Usuarios");
-        if (!response.ok) throw new Error("Error al obtener datos");
+        const response = await fetch("/api/admin");
+        if (!response.ok) throw new Error("Error al obtener administradores");
         const data = await response.json();
 
-        const formattedData: Employee[] = data.map((user: any) => ({
-          id: user.id,
-          name: user.nombre,
-          role: user.rol,
-          email: user.email,
-          phone: user.telefono,
-          location: user.ubicacion,
-          status: user.estado,
-        }));
-
-        setStaff(formattedData);
+        if (data.success) {
+          setAdmins(data.data);
+        } else {
+          throw new Error(data.message || "Error al cargar datos");
+        }
       } catch (error) {
-        console.error("Error cargando datos:", error);
+        console.error("Error cargando administradores:", error);
+        alert("Error al cargar la lista de administradores");
       }
     };
 
-    fetchStaff();
+    fetchAdmins();
   }, []);
 
-  const handleEmployeeSelect = (employeeId: string) => {
-    setSelectedEmployee(employeeId);
-    const employee = staff.find(emp => emp.id === employeeId);
-    if (employee) {
-      setName(employee.name);
-      setRole(employee.role);
-      setEmail(employee.email);
-      setPhone(employee.phone);
-      setLocation(employee.location || "");
+  const handleAdminSelect = (adminId: string) => {
+    setSelectedAdmin(adminId);
+    const admin = admins.find(admin => admin.pk_adm === adminId);
+    if (admin) {
+      setUsername(admin.nm_adm);
+      setNombres(admin.nms_adm || "");
+      setApPaterno(admin.app_adm || "");
+      setApMaterno(admin.apm_adm || "");
+      setRol(admin.fk_rl?.toString() || "0");
+      setSucursal(admin.fk_sc?.toString() || "0");
+      setEstado(admin.st_adm ? "1" : "0");
+      setEmail(admin.em_adm || "");
+      setTelefono(admin.tl_adm || "");
+      setDireccion(admin.ds_adm || "");
     }
   };
 
   const handleUpdate = async () => {
-    if (!selectedEmployee || !name || !role || !email || !phone) {
-      alert("Por favor, selecciona un empleado y completa todos los campos");
+    if (!selectedAdmin || !username || !nombres || !apPaterno || !email || !telefono) {
+      alert("Por favor, selecciona un administrador y completa todos los campos obligatorios");
       return;
     }
 
-    const updatedEmployee = {
-      nombre: name,
-      rol: role,
-      email: email,
-      telefono: phone,
-      ubicacion: location,
+    const updatedAdmin = {
+      nm_adm: username,
+      nms_adm: nombres,
+      app_adm: apPaterno,
+      apm_adm: apMaterno,
+      fk_rl: parseInt(rol) || 0,
+      fk_sc: parseInt(sucursal) || 0,
+      st_adm: estado,
+      em_adm: email,
+      tl_adm: telefono,
+      ds_adm: direccion,
     };
 
     try {
-      const response = await fetch(`https://690a052a1a446bb9cc2104c7.mockapi.io/Usuarios/${selectedEmployee}`, {
+      const response = await fetch(`/api/admin/${selectedAdmin}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedEmployee),
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedAdmin),
       });
 
-      if (!response.ok) throw new Error("Error al actualizar el empleado");
-      
-      alert("Empleado actualizado correctamente");
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || `Error ${response.status}`);
+      }
+
+      if (result.success) {
+        alert("Administrador actualizado correctamente");
+        // Recargar la lista de administradores
+        const refreshResponse = await fetch("/api/administradores");
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          if (refreshData.success) {
+            setAdmins(refreshData.data);
+          }
+        }
+      } else {
+        throw new Error(result.message || "Error desconocido");
+      }
     } catch (error) {
-      console.error("Error al actualizar empleado:", error);
-      alert("Error al actualizar empleado");
+      console.error("Error al actualizar administrador:", error);
+      alert(error instanceof Error ? error.message : "Error al actualizar administrador");
     }
+  };
+
+  const handleCancel = () => {
+    setSelectedAdmin("");
+    setUsername("");
+    setNombres("");
+    setApPaterno("");
+    setApMaterno("");
+    setRol("0");
+    setSucursal("0");
+    setEstado("1");
+    setEmail("");
+    setTelefono("");
+    setDireccion("");
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Modificar Empleado</h1>
+        <h1 className="text-2xl font-bold">Modificar Administrador</h1>
         <p className="text-muted-foreground">
-          Seleccione un empleado y modifique su información
+          Seleccione un administrador y modifique su información
         </p>
       </div>
 
@@ -112,40 +158,61 @@ const ModifyEmployee = () => {
         <CardContent className="pt-6">
           <div className="grid gap-6">
             <div className="space-y-2">
-              <Label>Seleccionar Empleado</Label>
-              <Select onValueChange={handleEmployeeSelect}>
+              <Label>Seleccionar Administrador</Label>
+              <Select onValueChange={handleAdminSelect}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccione un empleado" />
+                  <SelectValue placeholder="Seleccione un administrador" />
                 </SelectTrigger>
                 <SelectContent>
-                  {staff.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {employee.name} - {employee.role}
+                  {admins.map((admin) => (
+                    <SelectItem key={admin.pk_adm} value={admin.pk_adm}>
+                      {admin.nms_adm} {admin.app_adm} - {admin.nm_adm}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {selectedEmployee && (
+            {selectedAdmin && (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="editName">Nombre Completo *</Label>
+                    <Label htmlFor="editUsername">Username *</Label>
                     <Input
-                      id="editName"
-                      placeholder="Ej: Juan Pérez López"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      id="editUsername"
+                      placeholder="Ej: juan.perez"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="editRole">Puesto *</Label>
+                    <Label htmlFor="editNombres">Nombres *</Label>
                     <Input
-                      id="editRole"
-                      placeholder="Ej: Gerente de Ventas"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
+                      id="editNombres"
+                      placeholder="Ej: Juan Carlos"
+                      value={nombres}
+                      onChange={(e) => setNombres(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editApPaterno">Apellido Paterno *</Label>
+                    <Input
+                      id="editApPaterno"
+                      placeholder="Ej: Pérez"
+                      value={apPaterno}
+                      onChange={(e) => setApPaterno(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editApMaterno">Apellido Materno</Label>
+                    <Input
+                      id="editApMaterno"
+                      placeholder="Ej: López"
+                      value={apMaterno}
+                      onChange={(e) => setApMaterno(e.target.value)}
                     />
                   </div>
                 </div>
@@ -156,38 +223,76 @@ const ModifyEmployee = () => {
                     <Input
                       id="editEmail"
                       type="email"
-                      placeholder="empleado@catefarm.com"
+                      placeholder="admin@catefarm.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="editPhone">Teléfono *</Label>
+                    <Label htmlFor="editTelefono">Teléfono *</Label>
                     <Input
-                      id="editPhone"
+                      id="editTelefono"
                       placeholder="+591 78218688"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      value={telefono}
+                      onChange={(e) => setTelefono(e.target.value)}
                     />
                   </div>
                 </div>
 
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editRol">Rol</Label>
+                    <select
+                      id="editRol"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={rol}
+                      onChange={(e) => setRol(e.target.value)}
+                    >
+                      <option value="0">Administrador</option>
+                      <option value="1">Supervisor</option>
+                      <option value="2">Empleado</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editSucursal">Sucursal</Label>
+                    <Input
+                      id="editSucursal"
+                      type="number"
+                      placeholder="0"
+                      value={sucursal}
+                      onChange={(e) => setSucursal(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editEstado">Estado</Label>
+                    <select
+                      id="editEstado"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={estado}
+                      onChange={(e) => setEstado(e.target.value)}
+                    >
+                      <option value="1">Activo</option>
+                      <option value="0">Inactivo</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="editLocation">Ubicación</Label>
+                  <Label htmlFor="editDireccion">Dirección</Label>
                   <Input
-                    id="editLocation"
-                    placeholder="Seleccione la ubicación en el mapa"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    id="editDireccion"
+                    placeholder="Dirección del administrador"
+                    value={direccion}
+                    onChange={(e) => setDireccion(e.target.value)}
                   />
                 </div>
 
                 <div className="flex gap-4 justify-end pt-4">
-                  <Button variant="outline" onClick={() => setSelectedEmployee("")}>
+                  <Button variant="outline" onClick={handleCancel}>
                     Cancelar
                   </Button>
                   <Button onClick={handleUpdate}>
-                    Actualizar Empleado
+                    Actualizar Administrador
                   </Button>
                 </div>
               </>

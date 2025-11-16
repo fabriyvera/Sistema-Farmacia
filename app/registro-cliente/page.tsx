@@ -1,68 +1,78 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
-export default function LoginPage() {
+export default function RegisterClientPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");   
-  const [password, setPassword] = useState("");   
+  const [formData, setFormData] = useState({
+    nc_ct: "",
+    nm_ct: "",
+    tl_ct: "",
+    em_ct: "",
+    ds_ct: "",
+    pw_ct: ""
+  });
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<any>(null);
 
-  useEffect(() => {
-    const userData = sessionStorage.getItem("user");
-    const userType = sessionStorage.getItem("userType");
-
-    if (userData && userType) {
-      setUser(JSON.parse(userData));
-      if (userType === "admin") {
-        router.push("/admin");
-      } else {
-        router.push("/");
-      }
-    }
-  }, [router]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    if (!username || !password) {
+    // Validaciones
+    if (!formData.nc_ct || !formData.nm_ct || !formData.tl_ct || 
+        !formData.em_ct || !formData.ds_ct || !formData.pw_ct) {
       setError("Por favor, completa todos los campos");
       setLoading(false);
       return;
     }
 
+    if (formData.pw_ct !== confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.pw_ct.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("/api/auth/register-client", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
-      if (data.success) {
-        sessionStorage.setItem("user", JSON.stringify(data.user));
-        sessionStorage.setItem("userType", data.userType);
-
-        if (data.userType === "admin") {
-          router.push("/admin");
-        } else {
-          router.push("/");
-        }
+      if (result.success) {
+        alert("Cliente registrado correctamente. Ahora puedes iniciar sesión.");
+        router.push("/login");
       } else {
-        setError(data.error || "Credenciales incorrectas");
+        setError(result.message || "Error al registrar cliente");
       }
     } catch (error) {
+      console.error("Error al registrar cliente:", error);
       setError("Error de conexión. Intenta nuevamente.");
     } finally {
       setLoading(false);
@@ -95,13 +105,13 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* RIGHT: formulario */}
+          {/* RIGHT: formulario de registro */}
           <div className="p-10 md:p-12 flex flex-col justify-center">
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
-              Bienvenido a Catefarm
+              Crear Cuenta
             </h2>
             <p className="text-gray-600 mb-6">
-              Introduce tu usuario y contraseña para iniciar sesión.
+              Regístrate como cliente para acceder a nuestros servicios
             </p>
 
             {error && (
@@ -111,30 +121,95 @@ export default function LoginPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Nombre Completo */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Usuario
+                  Nombre Completo *
                 </label>
                 <input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  name="nc_ct"
+                  value={formData.nc_ct}
+                  onChange={handleChange}
                   required
-                  placeholder="Ingresa tu usuario"
+                  placeholder="Ej: Juan Pérez López"
                   className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
                 />
               </div>
 
+              {/* Username */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contraseña
+                  Username *
+                </label>
+                <input
+                  name="nm_ct"
+                  value={formData.nm_ct}
+                  onChange={handleChange}
+                  required
+                  placeholder="Ej: juan.perez"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email *
+                </label>
+                <input
+                  name="em_ct"
+                  type="email"
+                  value={formData.em_ct}
+                  onChange={handleChange}
+                  required
+                  placeholder="Ej: juan@email.com"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                />
+              </div>
+
+              {/* Teléfono */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Teléfono *
+                </label>
+                <input
+                  name="tl_ct"
+                  value={formData.tl_ct}
+                  onChange={handleChange}
+                  required
+                  placeholder="Ej: +591 78218688"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                />
+              </div>
+
+              {/* Dirección */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Dirección *
+                </label>
+                <input
+                  name="ds_ct"
+                  value={formData.ds_ct}
+                  onChange={handleChange}
+                  required
+                  placeholder="Ej: Av. Siempre Viva 123"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                />
+              </div>
+
+              {/* Contraseña */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contraseña *
                 </label>
                 <div className="relative">
                   <input
+                    name="pw_ct"
                     type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={formData.pw_ct}
+                    onChange={handleChange}
                     required
-                    placeholder="Ingresa tu contraseña"
+                    placeholder="Mínimo 6 caracteres"
                     className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300 pr-10"
                   />
                   <button
@@ -151,22 +226,50 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              {/* Confirmar Contraseña */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirmar Contraseña *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    placeholder="Repite tu contraseña"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full mt-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg py-3 font-medium shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+                {loading ? "Registrando..." : "Registrarse"}
               </button>
             </form>
 
             <div className="mt-6 text-sm text-gray-600">
-              ¿No tienes cuenta?{" "}
+              ¿Ya tienes cuenta?{" "}
               <button 
-                onClick={() => router.push("/registro-cliente")} 
+                onClick={() => router.push("/login")} 
                 className="text-orange-600 font-medium hover:underline"
               >
-                Regístrate
+                Inicia sesión aquí
               </button>
             </div>
           </div>

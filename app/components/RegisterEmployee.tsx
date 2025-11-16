@@ -7,11 +7,17 @@ import { Label } from "./ui/label";
 import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 
 const RegisterEmployee = () => {
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
+  // Estados para los campos del administrador
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [nombres, setNombres] = useState("");
+  const [apPaterno, setApPaterno] = useState("");
+  const [apMaterno, setApMaterno] = useState("");
+  const [sucursal, setSucursal] = useState("0");
+  const [estado, setEstado] = useState("1"); // 1 = activo por defecto
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [location, setLocation] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [direccion, setDireccion] = useState("");
   
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -20,6 +26,22 @@ const RegisterEmployee = () => {
   const autocompleteInstanceRef = useRef<any>(null);
 
   const { isLoaded: mapsLoaded, error: mapsError } = useGoogleMaps();
+
+  // Para debuggear
+  useEffect(() => {
+    console.log('Estado actual del formulario:', {
+      username,
+      password,
+      nombres,
+      apPaterno,
+      apMaterno,
+      email,
+      telefono,
+      sucursal,
+      estado,
+      direccion
+    });
+  }, [username, password, nombres, apPaterno, apMaterno, email, telefono, sucursal, estado, direccion]);
 
   // Inicializar mapa cuando Google Maps esté cargado
   useEffect(() => {
@@ -86,7 +108,7 @@ const RegisterEmployee = () => {
         placeMarker({ lat, lng });
         
         // Establecer dirección
-        setLocation(place.formatted_address || '');
+        setDireccion(place.formatted_address || '');
       }
     });
   };
@@ -130,59 +152,82 @@ const RegisterEmployee = () => {
       { location },
       (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
         if (status === 'OK' && results && results[0]) {
-          setLocation(results[0].formatted_address);
+          setDireccion(results[0].formatted_address);
         } else {
-          setLocation(`Lat: ${location.lat.toFixed(6)}, Lng: ${location.lng.toFixed(6)}`);
+          setDireccion(`Lat: ${location.lat.toFixed(6)}, Lng: ${location.lng.toFixed(6)}`);
         }
       }
     );
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocation(e.target.value);
+    setDireccion(e.target.value);
   };
 
   const handleSubmit = async () => {
-    if (!name || !role || !email || !phone) {
+    // Validar campos obligatorios
+    if (!username || !password || !nombres || !apPaterno || !email || !telefono) {
       alert("Por favor, completa todos los campos obligatorios");
       return;
     }
 
-    const newEmployee = {
-      nombre: name,
-      rol: role,
-      email: email,
-      telefono: phone,
-      direccion: location,
-      estado: "Activo",
+    const newAdmin = {
+      nm_adm: username,  // CORREGIDO: nrm_adm → nm_adm
+      pw_adm: password,
+      nms_adm: nombres,
+      app_adm: apPaterno,
+      apm_adm: apMaterno, // CORREGIDO: aprm_adm → apm_adm
+      fk_rl: 0,
+      fk_sc: parseInt(sucursal) || 0,
+      st_adm: estado === "1" ? 1 : 0,
+      em_adm: email,
+      tl_adm: telefono,
+      ds_adm: direccion, // INCLUIDO: dirección desde el mapa
     };
 
+    console.log('Enviando datos al backend:', newAdmin);
+
     try {
-      const response = await fetch("https://690a052a1a446bb9cc2104c7.mockapi.io/Usuarios", {
+      const response = await fetch("/api/admin", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newEmployee),
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newAdmin),
       });
 
-      if (!response.ok) throw new Error("Error al guardar el empleado");
+      const result = await response.json();
       
-      // Limpiar formulario
-      setName("");
-      setRole("");
-      setEmail("");
-      setPhone("");
-      setLocation("");
-      
-      // Remover marcador
-      if (markerRef.current) {
-        markerRef.current.setMap(null);
-        markerRef.current = null;
+      if (!response.ok) {
+        throw new Error(result.message || `Error ${response.status}`);
       }
-      
-      alert("Empleado registrado correctamente");
+
+      if (result.success) {
+        // Limpiar formulario
+        setUsername("");
+        setPassword("");
+        setNombres("");
+        setApPaterno("");
+        setApMaterno("");
+        setSucursal("0");
+        setEstado("1");
+        setEmail("");
+        setTelefono("");
+        setDireccion("");
+        
+        // Remover marcador
+        if (markerRef.current) {
+          markerRef.current.setMap(null);
+          markerRef.current = null;
+        }
+        
+        alert("Administrador registrado correctamente");
+      } else {
+        throw new Error(result.message || "Error desconocido");
+      }
     } catch (error) {
-      console.error("Error al registrar empleado:", error);
-      alert("Error al registrar empleado");
+      console.error("Error completo al registrar administrador:", error);
+      alert(error instanceof Error ? error.message : "Error al registrar administrador");
     }
   };
 
@@ -198,75 +243,139 @@ const RegisterEmployee = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Registrar Nuevo Empleado</h1>
+        <h1 className="text-2xl font-bold">Registrar Nuevo Administrador</h1>
         <p className="text-muted-foreground">
-          Complete la información del nuevo empleado
+          Complete la información del nuevo administrador
         </p>
       </div>
 
       <Card>
         <CardContent className="pt-6">
           <div className="grid gap-6">
+            {/* Campos de credenciales */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nombre Completo *</Label>
+                <Label htmlFor="username">Username *</Label>
                 <Input
-                  id="name"
-                  placeholder="Ej: Juan Pérez López"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  id="username"
+                  placeholder="Ej: juan.perez"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">Puesto *</Label>
+                <Label htmlFor="password">Password *</Label>
                 <Input
-                  id="role"
-                  placeholder="Ej: Gerente de Ventas"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
+                  id="password"
+                  type="password"
+                  placeholder="Ingrese la contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </div>
 
+            {/* Campos de nombres */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="nombres">Nombres *</Label>
+                <Input
+                  id="nombres"
+                  placeholder="Ej: Juan Carlos"
+                  value={nombres}
+                  onChange={(e) => setNombres(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="apPaterno">Apellido Paterno *</Label>
+                <Input
+                  id="apPaterno"
+                  placeholder="Ej: Pérez"
+                  value={apPaterno}
+                  onChange={(e) => setApPaterno(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="apMaterno">Apellido Materno</Label>
+                <Input
+                  id="apMaterno"
+                  placeholder="Ej: López"
+                  value={apMaterno}
+                  onChange={(e) => setApMaterno(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Campos de contacto */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Correo Electrónico *</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="empleado@catefarm.com"
+                  placeholder="admin@catefarm.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Teléfono *</Label>
+                <Label htmlFor="telefono">Teléfono *</Label>
                 <Input
-                  id="phone"
+                  id="telefono"
                   placeholder="+591 78218688"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
                 />
               </div>
             </div>
 
+            {/* Campos de configuración */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="sucursal">Sucursal</Label>
+                <Input
+                  id="sucursal"
+                  type="number"
+                  placeholder="0"
+                  value={sucursal}
+                  onChange={(e) => setSucursal(e.target.value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Número de sucursal asignada
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="estado">Estado</Label>
+                <select
+                  id="estado"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={estado}
+                  onChange={(e) => setEstado(e.target.value)}
+                >
+                  <option value="1">Activo</option>
+                  <option value="0">Inactivo</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Mapa de Google Maps para dirección - ESTA PARTE ES CLAVE */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="location">Dirección Seleccionada</Label>
+                <Label htmlFor="direccion">Dirección Seleccionada *</Label>
                 <Input
                   ref={autocompleteRef}
-                  id="location"
+                  id="direccion"
                   placeholder="Escribe para buscar dirección o haz clic en el mapa"
-                  value={location}
+                  value={direccion}
                   onChange={handleInputChange}
                 />
                 <p className="text-sm text-muted-foreground">
-                  {location ? "Dirección seleccionada correctamente" : "Haz clic en el mapa o busca una dirección"}
+                  {direccion ? "Dirección seleccionada correctamente" : "Haz clic en el mapa o busca una dirección"}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label>Selecciona la ubicación en el mapa</Label>
+                <Label>Selecciona la ubicación en el mapa *</Label>
                 
                 {mapsError ? (
                   <div className="h-64 bg-muted rounded-md flex items-center justify-center flex-col gap-4">
@@ -301,7 +410,7 @@ const RegisterEmployee = () => {
 
             <div className="flex gap-4 justify-end pt-4">
               <Button onClick={handleSubmit}>
-                Registrar Empleado
+                Registrar Administrador
               </Button>
             </div>
           </div>
