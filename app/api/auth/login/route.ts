@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const usuarioResult = await pool.request()
       .input('username', username)
       .input('password', password)
-      .query('SELECT * FROM us_mst WHERE nm_us = @username AND pw_us = @password AND st_us = 1');
+      .query('SELECT * FROM adm_mst WHERE nm_us = @username AND pw_us = @password AND st_us = 1');
 
     if (usuarioResult.recordset.length > 0) {
       return NextResponse.json({

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import type { Product } from "../cliente/page";
+import type { Product } from "../login/page";
 
 interface CategoriesViewProps {
   onSelectProduct: (product: Product) => void;
@@ -18,151 +18,188 @@ const CategoriesView = ({ onSelectProduct }: CategoriesViewProps) => {
         id: 1,
         name: "Paracetamol 500mg",
         category: "Analgésicos",
-        price: 25.50,
-        image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400",
+        price: 25.5,
+        image:
+          "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400",
         stock: 450,
         requiresPrescription: false,
         description: "Analgésico y antipirético para alivio del dolor y fiebre",
-        activeIngredient: "Paracetamol 500mg"
+        activeIngredient: "Paracetamol 500mg",
       },
       {
         id: 2,
         name: "Ibuprofeno 400mg",
         category: "Analgésicos",
-        price: 35.00,
-        image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400",
+        price: 35.0,
+        image:
+          "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400",
         stock: 320,
         requiresPrescription: false,
         description: "Antiinflamatorio no esteroideo",
-        activeIngredient: "Ibuprofeno 400mg"
+        activeIngredient: "Ibuprofeno 400mg",
       },
       {
         id: 7,
         name: "Aspirina 100mg",
         category: "Analgésicos",
-        price: 18.00,
-        image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400",
+        price: 18.0,
+        image:
+          "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400",
         stock: 350,
         requiresPrescription: false,
         description: "Analgésico y antiagregante plaquetario",
-        activeIngredient: "Ácido acetilsalicílico 100mg"
-      }
+        activeIngredient: "Ácido acetilsalicílico 100mg",
+      },
     ],
     vitaminas: [
       {
         id: 3,
         name: "Vitamina C 1000mg",
         category: "Vitaminas",
-        price: 45.00,
-        image: "https://images.unsplash.com/photo-1550572017-4240c1baaf90?w=400",
+        price: 45.0,
+        image:
+          "https://images.unsplash.com/photo-1550572017-4240c1baaf90?w=400",
         stock: 500,
         requiresPrescription: false,
         description: "Suplemento vitamínico",
-        activeIngredient: "Ácido ascórbico 1000mg"
+        activeIngredient: "Ácido ascórbico 1000mg",
       },
       {
         id: 8,
         name: "Vitamina D3 2000 UI",
         category: "Vitaminas",
-        price: 52.00,
-        image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400",
+        price: 52.0,
+        image:
+          "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400",
         stock: 280,
         requiresPrescription: false,
         description: "Suplemento de vitamina D",
-        activeIngredient: "Colecalciferol 2000 UI"
+        activeIngredient: "Colecalciferol 2000 UI",
       },
       {
         id: 9,
         name: "Complejo B",
         category: "Vitaminas",
-        price: 38.00,
-        image: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=400",
+        price: 38.0,
+        image:
+          "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=400",
         stock: 410,
         requiresPrescription: false,
         description: "Complejo vitamínico del grupo B",
-        activeIngredient: "Vitaminas B1, B6, B12"
-      }
+        activeIngredient: "Vitaminas B1, B6, B12",
+      },
     ],
     antibioticos: [
       {
         id: 10,
         name: "Amoxicilina 500mg",
         category: "Antibióticos",
-        price: 85.00,
-        image: "https://images.unsplash.com/photo-1603349206295-dde20617cb6a?w=400",
+        price: 85.0,
+        image:
+          "https://images.unsplash.com/photo-1603349206295-dde20617cb6a?w=400",
         stock: 180,
         requiresPrescription: true,
         description: "Antibiótico de amplio espectro",
-        activeIngredient: "Amoxicilina 500mg"
+        activeIngredient: "Amoxicilina 500mg",
       },
       {
         id: 11,
         name: "Azitromicina 500mg",
         category: "Antibióticos",
-        price: 125.00,
-        image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400",
+        price: 125.0,
+        image:
+          "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400",
         stock: 95,
         requiresPrescription: true,
         description: "Antibiótico macrólido",
-        activeIngredient: "Azitromicina 500mg"
-      }
+        activeIngredient: "Azitromicina 500mg",
+      },
     ],
     digestivos: [
       {
         id: 4,
         name: "Omeprazol 20mg",
         category: "Digestivos",
-        price: 55.00,
-        image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400",
+        price: 55.0,
+        image:
+          "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400",
         stock: 280,
         requiresPrescription: true,
         description: "Inhibidor de bomba de protones",
-        activeIngredient: "Omeprazol 20mg"
+        activeIngredient: "Omeprazol 20mg",
       },
       {
         id: 12,
         name: "Ranitidina 150mg",
         category: "Digestivos",
-        price: 42.00,
-        image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400",
+        price: 42.0,
+        image:
+          "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400",
         stock: 220,
         requiresPrescription: false,
         description: "Antiácido para gastritis",
-        activeIngredient: "Ranitidina 150mg"
-      }
+        activeIngredient: "Ranitidina 150mg",
+      },
     ],
     alergias: [
       {
         id: 5,
         name: "Loratadina 10mg",
         category: "Antihistamínicos",
-        price: 28.00,
-        image: "https://images.unsplash.com/photo-1603349206295-dde20617cb6a?w=400",
+        price: 28.0,
+        image:
+          "https://images.unsplash.com/photo-1603349206295-dde20617cb6a?w=400",
         stock: 200,
         requiresPrescription: false,
         description: "Antihistamínico para alergias",
-        activeIngredient: "Loratadina 10mg"
+        activeIngredient: "Loratadina 10mg",
       },
       {
         id: 13,
         name: "Cetirizina 10mg",
         category: "Antihistamínicos",
-        price: 32.00,
-        image: "https://images.unsplash.com/photo-1550572017-4240c1baaf90?w=400",
+        price: 32.0,
+        image:
+          "https://images.unsplash.com/photo-1550572017-4240c1baaf90?w=400",
         stock: 315,
         requiresPrescription: false,
         description: "Antihistamínico de segunda generación",
-        activeIngredient: "Cetirizina 10mg"
-      }
-    ]
+        activeIngredient: "Cetirizina 10mg",
+      },
+    ],
   };
 
   const categories = [
-    { id: "analgesicos", name: "Analgésicos", icon: "💊", count: allProducts.analgesicos.length },
-    { id: "vitaminas", name: "Vitaminas", icon: "🌿", count: allProducts.vitaminas.length },
-    { id: "antibioticos", name: "Antibióticos", icon: "🔬", count: allProducts.antibioticos.length },
-    { id: "digestivos", name: "Digestivos", icon: "🫀", count: allProducts.digestivos.length },
-    { id: "alergias", name: "Alergias", icon: "🤧", count: allProducts.alergias.length }
+    {
+      id: "analgesicos",
+      name: "Analgésicos",
+      icon: "💊",
+      count: allProducts.analgesicos.length,
+    },
+    {
+      id: "vitaminas",
+      name: "Vitaminas",
+      icon: "🌿",
+      count: allProducts.vitaminas.length,
+    },
+    {
+      id: "antibioticos",
+      name: "Antibióticos",
+      icon: "🔬",
+      count: allProducts.antibioticos.length,
+    },
+    {
+      id: "digestivos",
+      name: "Digestivos",
+      icon: "🫀",
+      count: allProducts.digestivos.length,
+    },
+    {
+      id: "alergias",
+      name: "Alergias",
+      icon: "🤧",
+      count: allProducts.alergias.length,
+    },
   ];
 
   return (
@@ -188,7 +225,11 @@ const CategoriesView = ({ onSelectProduct }: CategoriesViewProps) => {
         </TabsList>
 
         {Object.entries(allProducts).map(([categoryKey, products]) => (
-          <TabsContent key={categoryKey} value={categoryKey} className="space-y-3 mt-0">
+          <TabsContent
+            key={categoryKey}
+            value={categoryKey}
+            className="space-y-3 mt-0"
+          >
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
               <p className="text-sm text-orange-800">
                 {products.length} productos disponibles en esta categoría
@@ -223,7 +264,9 @@ const CategoriesView = ({ onSelectProduct }: CategoriesViewProps) => {
                         )}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-primary">${product.price.toFixed(2)}</span>
+                        <span className="text-primary">
+                          ${product.price.toFixed(2)}
+                        </span>
                         <Badge variant="outline" className="text-xs">
                           Stock: {product.stock}
                         </Badge>

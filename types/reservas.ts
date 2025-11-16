@@ -26,6 +26,7 @@ export interface Reserva {
   sucursalNombre?: string;
 }
 
+
 export interface Venta {
   id: string;
   productoId: string;
@@ -36,7 +37,11 @@ export interface Venta {
   fecha: string;
   pago: string;
 }
-
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
 export interface Sucursal {
   id: string;
   nombre: string;
