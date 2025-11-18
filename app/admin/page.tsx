@@ -32,13 +32,13 @@ import Suppliers from "../components/Suppliers";
 import ProductList from "../components/ProductList";
 import RegisterProduct from "../components/RegisterProduct";
 import EditProduct from "../components/EditProduct";
-import Customers from "../components/Customers";
 import Reports from "../components/Reports";
 import Sales from "../components/Sales";
 import BranchManagement from "../components/BranchManagement";
 import EmployeeList from "../components/EmployeeList";
 import RegisterEmployee from "../components/RegisterEmployee";
 import ModifyEmployee from "../components/ModifyEmployee";
+import ListandSearch from "../components/ListandSearch";
 
 const App = () => {
   const [activeView, setActiveView] = useState("sales");
@@ -46,6 +46,8 @@ const App = () => {
   const [productsSubmenuOpen, setProductsSubmenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [userInitials, setUserInitials] = useState("");
+  const [customersSubmenuOpen, setCustomersSubmenuOpen] = useState(false);
+
 
   // Obtener información del usuario al cargar el componente
   useEffect(() => {
@@ -132,7 +134,13 @@ const App = () => {
       icon: Users,
     }
   ];
-
+  const customersSubmenuItems = [
+  {
+    id: "list-customer",
+    title: "Listado y Búsqueda",
+    icon: UserCircle,
+  }
+  ];
   const productsSubmenuItems = [
     {
       id: "product-list",
@@ -167,6 +175,15 @@ const App = () => {
     setActiveView(viewId);
   };
 
+  const handleCustomersClick = () => {
+  setCustomersSubmenuOpen(!customersSubmenuOpen);
+};
+
+const handleCustomersSubmenuClick = (viewId: string) => {
+  setActiveView(viewId);
+};
+
+
   // Función para cerrar sesión
   const handleLogout = () => {
     // Limpiar sessionStorage
@@ -191,6 +208,8 @@ const App = () => {
         return <RegisterEmployee />;
       case "modify-employee":
         return <ModifyEmployee />;
+      case "list-customer":
+        return <ListandSearch />;
       case "product-list":
         return <ProductList />;
       case "register-product":
@@ -199,8 +218,6 @@ const App = () => {
         } } />;
       case "edit-product":
         return <EditProduct />;
-      case "customers":
-        return <Customers />;
       case "reports":
         return <Reports/>;
       case "branch-management":
@@ -273,6 +290,45 @@ const App = () => {
                         </SidebarMenuItem>
                       );
                     }
+                    if (item.id === "customers") {
+  return (
+    <SidebarMenuItem key={item.id}>
+      <div className="space-y-1">
+        <SidebarMenuButton
+          onClick={handleCustomersClick}
+          isActive={activeView.startsWith("list-customer")}
+        >
+          <Icon className="h-4 w-4" />
+          <span>{item.title}</span>
+          {customersSubmenuOpen ? (
+            <ChevronDown className="h-4 w-4 ml-auto" />
+          ) : (
+            <ChevronRight className="h-4 w-4 ml-auto" />
+          )}
+        </SidebarMenuButton>
+
+        {customersSubmenuOpen && (
+          <div className="ml-4 space-y-1 border-l border-sidebar-border pl-2">
+            {customersSubmenuItems.map((subItem) => {
+              const SubIcon = subItem.icon;
+              return (
+                <SidebarMenuButton
+                  key={subItem.id}
+                  onClick={() => handleCustomersSubmenuClick(subItem.id)}
+                  isActive={activeView === subItem.id}
+                  className="text-sm"
+                >
+                  <SubIcon className="h-3 w-3" />
+                  <span>{subItem.title}</span>
+                </SidebarMenuButton>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </SidebarMenuItem>
+  );
+}
 
                     if (item.id === "products") {
                       return (
