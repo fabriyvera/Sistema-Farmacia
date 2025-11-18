@@ -41,6 +41,17 @@ import {
 const Reports = () => {
   const [activeTab, setActiveTab] = useState("inventory");
 
+  // NUEVO: filtros del caso de uso
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [reportType, setReportType] = useState("ventas");
+  const [downloading, setDownloading] = useState(false);
+
+  // Obtener rol del usuario (Gerente / Farmacéutico)
+  const userRole = typeof window !== "undefined"
+    ? sessionStorage.getItem("userType")
+    : null;
+
   // Inventory Report Data
   const inventoryData = [
     { name: "Paracetamol 500mg", category: "Analgésicos", stock: 450, minStock: 100, status: "Óptimo" },
@@ -103,6 +114,8 @@ const Reports = () => {
     { product: "Loratadina 10mg", units: 650, revenue: 18200 }
   ];
 
+  const [showData, setShowData] = useState(false);
+
   const COLORS = ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5'];
 
   const handleDownloadReport = (reportType: string) => {
@@ -111,13 +124,47 @@ const Reports = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1>Informes y Reportes</h1>
-        <p className="text-muted-foreground">
-          Visualiza y analiza datos importantes del negocio
-        </p>
-      </div>
+      {/* CONTROL PRINCIPAL */}
+<Card className="p-4">
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    
+    {/* Fecha desde */}
+    <div>
+      <label className="text-sm font-medium">Desde</label>
+      <input
+        type="date"
+        className="w-full border rounded p-2"
+        value={dateFrom}
+        onChange={(e) => setDateFrom(e.target.value)}
+      />
+    </div>
 
+    {/* Fecha hasta */}
+    <div>
+      <label className="text-sm font-medium">Hasta</label>
+      <input
+        type="date"
+        className="w-full border rounded p-2"
+        value={dateTo}
+        onChange={(e) => setDateTo(e.target.value)}
+      />
+    </div>
+
+    {/* Botón Mostrar */}
+    <div className="flex items-end">
+      <Button
+        className="w-full"
+        onClick={() => setShowData(true)}
+        disabled={!dateFrom || !dateTo}
+      >
+        Mostrar Datos
+      </Button>
+    </div>
+
+  </div>
+</Card>
+
+    {showData && (
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="inventory" className="gap-2">
@@ -136,12 +183,49 @@ const Reports = () => {
 
         {/* Inventory Report Tab */}
         <TabsContent value="inventory" className="space-y-4">
-          <div className="flex justify-end">
-            <Button variant="outline" className="gap-2" onClick={() => handleDownloadReport("Inventario")}>
-              <Download className="h-4 w-4" />
-              Descargar Informe
-            </Button>
-          </div>
+          {/* BOTÓN GENERAR INFORME */}
+  <div className="mt-4 flex justify-end">
+    <Button
+      disabled={downloading}
+      onClick={async () => {
+        if (!dateFrom || !dateTo) {
+          alert("Debe seleccionar un rango de fechas");
+          return;
+        }
+
+        setDownloading(true);
+
+        try {
+          const res = await fetch("/api/reports/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              dateFrom,
+              dateTo,
+              reportType,
+              role: userRole
+            })
+          });
+
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `Reporte-${reportType}.pdf`;
+          a.click();
+
+        } catch (err) {
+          alert("Error generando reporte");
+        } finally {
+          setDownloading(false);
+        }
+      }}
+      className="gap-2"
+    >
+      <Download className="w-4 h-4" />
+      {downloading ? "Generando..." : "Generar Informe PDF"}
+    </Button>
+  </div>
 
           {/* Inventory Stats */}
           <div className="grid gap-4 md:grid-cols-4">
@@ -252,12 +336,49 @@ const Reports = () => {
 
         {/* Suppliers Report Tab */}
         <TabsContent value="suppliers" className="space-y-4">
-          <div className="flex justify-end">
-            <Button variant="outline" className="gap-2" onClick={() => handleDownloadReport("Proveedores")}>
-              <Download className="h-4 w-4" />
-              Descargar Informe
-            </Button>
-          </div>
+            {/* BOTÓN GENERAR INFORME */}
+  <div className="mt-4 flex justify-end">
+    <Button
+      disabled={downloading}
+      onClick={async () => {
+        if (!dateFrom || !dateTo) {
+          alert("Debe seleccionar un rango de fechas");
+          return;
+        }
+
+        setDownloading(true);
+
+        try {
+          const res = await fetch("/api/reports/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              dateFrom,
+              dateTo,
+              reportType,
+              role: userRole
+            })
+          });
+
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `Reporte-${reportType}.pdf`;
+          a.click();
+
+        } catch (err) {
+          alert("Error generando reporte");
+        } finally {
+          setDownloading(false);
+        }
+      }}
+      className="gap-2"
+    >
+      <Download className="w-4 h-4" />
+      {downloading ? "Generando..." : "Generar Informe PDF"}
+    </Button>
+  </div>
 
           {/* Supplier Stats */}
           <div className="grid gap-4 md:grid-cols-4">
@@ -374,12 +495,49 @@ const Reports = () => {
 
         {/* Sales Report Tab */}
         <TabsContent value="sales" className="space-y-4">
-          <div className="flex justify-end">
-            <Button variant="outline" className="gap-2" onClick={() => handleDownloadReport("Ventas")}>
-              <Download className="h-4 w-4" />
-              Descargar Informe
-            </Button>
-          </div>
+          {/* BOTÓN GENERAR INFORME */}
+  <div className="mt-4 flex justify-end">
+    <Button
+      disabled={downloading}
+      onClick={async () => {
+        if (!dateFrom || !dateTo) {
+          alert("Debe seleccionar un rango de fechas");
+          return;
+        }
+
+        setDownloading(true);
+
+        try {
+          const res = await fetch("/api/reports/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              dateFrom,
+              dateTo,
+              reportType,
+              role: userRole
+            })
+          });
+
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `Reporte-${reportType}.pdf`;
+          a.click();
+
+        } catch (err) {
+          alert("Error generando reporte");
+        } finally {
+          setDownloading(false);
+        }
+      }}
+      className="gap-2"
+    >
+      <Download className="w-4 h-4" />
+      {downloading ? "Generando..." : "Generar Informe PDF"}
+    </Button>
+  </div>
 
           {/* Sales Stats */}
           <div className="grid gap-4 md:grid-cols-4">
@@ -521,6 +679,7 @@ const Reports = () => {
           </Card>
         </TabsContent>
       </Tabs>
+    )}
     </div>
   );
 };
