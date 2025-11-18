@@ -18,12 +18,13 @@ export interface Reserva {
   productoId: string;
   fecha: string;
   cantidad: string;
-  estado: 'pendiente' | 'confirmada' | 'completada' | 'cancelada';
+  estado: 'pendiente' | 'confirmada' | 'completada' | 'cancelado' | 'completado';
   createdAt: string;
   clienteId?: string;
   clienteNombre?: string;
   sucursalId?: string;
   sucursalNombre?: string;
+  productoNombre?: string; // Nuevo campo
 }
 
 
@@ -64,6 +65,18 @@ export interface Product {
   requiresPrescription: boolean;
   description: string;
   activeIngredient: string;
+}
+
+export interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  stock: number; // ahora es número
+  descripcion: string;
+  categoria: string;
+  estado: string;
 }
 
 export interface Reservation {

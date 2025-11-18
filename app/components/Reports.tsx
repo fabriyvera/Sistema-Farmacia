@@ -26,9 +26,6 @@ import {
 
 const Reports = () => {
 
-  // ============================================================
-  // ⚙️ ESTADOS PRINCIPALES
-  // ============================================================
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 

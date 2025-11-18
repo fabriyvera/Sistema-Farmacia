@@ -115,7 +115,7 @@ const ModifyEmployee = () => {
       if (result.success) {
         alert("Administrador actualizado correctamente");
         // Recargar la lista de administradores
-        const refreshResponse = await fetch("/api/administradores");
+        const refreshResponse = await fetch("/api/admin");
         if (refreshResponse.ok) {
           const refreshData = await refreshResponse.json();
           if (refreshData.success) {

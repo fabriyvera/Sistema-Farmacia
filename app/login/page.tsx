@@ -28,6 +28,8 @@ export default function LoginPage() {
     }
   }, [router]);
 
+  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -67,6 +69,7 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+    
   };
 
   return (
