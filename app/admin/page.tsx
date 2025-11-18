@@ -33,13 +33,13 @@ import ProductList from "../components/ProductList";
 import RegisterProduct from "../components/RegisterProduct";
 import EditProduct from "../components/EditProduct";
 import Reports from "../components/Reports";
-import Sales from "../components/Sales";
 import BranchManagement from "../components/BranchManagement";
 import EmployeeList from "../components/EmployeeList";
 import RegisterEmployee from "../components/RegisterEmployee";
 import ModifyEmployee from "../components/ModifyEmployee";
 import ListandSearch from "../components/ListandSearch";
-
+import SaleList from "../components/SaleList";
+import RegisterSale from "../components/RegisterSale";
 const App = () => {
   const [activeView, setActiveView] = useState("sales");
   const [staffSubmenuOpen, setStaffSubmenuOpen] = useState(false);
@@ -47,6 +47,8 @@ const App = () => {
   const [user, setUser] = useState<any>(null);
   const [userInitials, setUserInitials] = useState("");
   const [customersSubmenuOpen, setCustomersSubmenuOpen] = useState(false);
+  const [salesSubmenuOpen, setSalesSubmenuOpen] = useState(false);
+
 
 
   // Obtener información del usuario al cargar el componente
@@ -73,15 +75,16 @@ const App = () => {
   }, []);
 
   const menuItems = [
-    {
-      id: "sales",      
-      title: "Ventas",
-      icon: ShoppingCart,
-    },
+    
     {
       id: "dashboard",
       title: "Panel de Control",
       icon: LayoutDashboard,
+    },
+    {
+      id: "sales",      
+      title: "Ventas",
+      icon: ShoppingCart,
     },
     {
       id: "products", 
@@ -158,6 +161,18 @@ const App = () => {
       icon: Package,
     }
   ];
+  const salesSubmenuItems = [
+  {
+    id: "sales-list",
+    title: "Listado de Ventas",
+    icon: ShoppingCart, 
+  },
+  {
+    id: "sales-register",
+    title: "Registrar Venta",
+    icon: ShoppingCart, 
+  }
+];
 
   const handleStaffClick = () => {
     setStaffSubmenuOpen(!staffSubmenuOpen);
@@ -182,6 +197,13 @@ const App = () => {
 const handleCustomersSubmenuClick = (viewId: string) => {
   setActiveView(viewId);
 };
+const handleSalesClick = () => {
+  setSalesSubmenuOpen(!salesSubmenuOpen);
+};
+
+const handleSalesSubmenuClick = (viewId: string) => {
+  setActiveView(viewId);
+};
 
 
   // Función para cerrar sesión
@@ -196,8 +218,6 @@ const handleCustomersSubmenuClick = (viewId: string) => {
 
   const renderView = () => {
     switch (activeView) {
-      case "sales":
-        return <Sales/>;
       case "dashboard":
         return <Dashboard />;
       case "suppliers":
@@ -208,6 +228,10 @@ const handleCustomersSubmenuClick = (viewId: string) => {
         return <RegisterEmployee />;
       case "modify-employee":
         return <ModifyEmployee />;
+      case "sales-list":
+        return <SaleList />;       // <-- Lista de ventas (trae de la API)
+      case "sales-register":
+        return <RegisterSale />;
       case "list-customer":
         return <ListandSearch />;
       case "product-list":
@@ -369,6 +393,46 @@ const handleCustomersSubmenuClick = (viewId: string) => {
                         </SidebarMenuItem>
                       );
                     }
+                    if (item.id === "sales") {
+  return (
+    <SidebarMenuItem key={item.id}>
+      <div className="space-y-1">
+        <SidebarMenuButton
+          onClick={handleSalesClick}
+          isActive={activeView.startsWith("sales")}
+        >
+          <Icon className="h-4 w-4" />
+          <span>{item.title}</span>
+          {salesSubmenuOpen ? (
+            <ChevronDown className="h-4 w-4 ml-auto" />
+          ) : (
+            <ChevronRight className="h-4 w-4 ml-auto" />
+          )}
+        </SidebarMenuButton>
+
+        {salesSubmenuOpen && (
+          <div className="ml-4 space-y-1 border-l border-sidebar-border pl-2">
+            {salesSubmenuItems.map((subItem) => {
+              const SubIcon = subItem.icon;
+              return (
+                <SidebarMenuButton
+                  key={subItem.id}
+                  onClick={() => handleSalesSubmenuClick(subItem.id)}
+                  isActive={activeView === subItem.id}
+                  className="text-sm"
+                >
+                  <SubIcon className="h-3 w-3" />
+                  <span>{subItem.title}</span>
+                </SidebarMenuButton>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </SidebarMenuItem>
+  );
+}
+
 
                     return (
                       <SidebarMenuItem key={item.id}>
@@ -414,6 +478,7 @@ const handleCustomersSubmenuClick = (viewId: string) => {
                   {activeView === "customers" && "Clientes"}
                   {activeView === "reports" && "Reportes"}
                   {activeView === "branch-management" && "Gestión de Sucursales"}
+                  {activeView === "sales-list" && "Lista de Ventas"}
                 </h1>
                 <p className="text-gray-600 text-sm mt-1">
                   Sistema de gestión CATEFARM
