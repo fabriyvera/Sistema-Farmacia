@@ -1,326 +1,121 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Label } from "./ui/label";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { ArrowLeft, BookmarkCheck, Plus, Minus, AlertCircle, Check, MapPin } from "lucide-react";
-import { Product, Sucursal } from "@/types/reservas";
-import { apiService } from "@/lib/api";
+import { Heart, ShoppingCart, ChevronLeft, Calendar, User } from "lucide-react";
+import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { Producto } from "@/types/reservas";
 
 interface ProductDetailProps {
-  product: Product;
+  product: Producto;
+  onAddToCart: (id: string) => void;
   onBack: () => void;
-  onReserve: (product: Product, quantity: number, pickupLocation: string, sucursalId: string) => void;
 }
 
-const ProductDetail = ({ product, onBack, onReserve }: ProductDetailProps) => {
-  const [quantity, setQuantity] = useState(1);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showReserveDialog, setShowReserveDialog] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const loadSucursales = async () => {
-      try {
-        const sucursalesData = await apiService.getSucursales();
-        // Filtrar solo sucursales activas
-        const sucursalesActivas = sucursalesData.filter(s => s.estado === "Activo");
-        setSucursales(sucursalesActivas);
-        if (sucursalesActivas.length > 0) {
-          setSelectedLocation(sucursalesActivas[0].id);
-        }
-      } catch (error) {
-        console.error("Error loading sucursales", error);
-      }
-    };
-
-    loadSucursales();
-  }, []);
-
-  const handleReserve = async () => {
-    setLoading(true);
-    try {
-      const sucursal = sucursales.find(s => s.id === selectedLocation);
-      if (!sucursal) {
-        alert("Error: No se encontró la sucursal seleccionada");
-        return;
-      }
-
-      // Crear reserva en la API
-      const reservaData = {
-        productoId: product.id,
-        fecha: new Date().toISOString(),
-        cantidad: quantity.toString(),
-        estado: 'pendiente' as const,
-        createdAt: new Date().toISOString(),
-        sucursalId: selectedLocation,
-        sucursalNombre: sucursal.nombre,
-        clienteId: '1', // En un sistema real, esto vendría del usuario logueado
-        clienteNombre: 'Cliente Demo' // En un sistema real, esto vendría del usuario logueado
-      };
-
-      await apiService.createReserva(reservaData);
-      
-      // Llamar a la función del padre
-      onReserve(product, quantity, sucursal.nombre, selectedLocation);
-      setShowReserveDialog(false);
-      setShowSuccess(true);
-      
-      setTimeout(() => {
-        setShowSuccess(false);
-        onBack();
-      }, 2000);
-      
-    } catch (error) {
-      console.error("Error creating reservation", error);
-      alert("Error al crear la reserva");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const incrementQuantity = () => {
-    if (quantity < product.stock) {
-      setQuantity(quantity + 1);
-    }
-  };
-
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
-    }
-  };
+export function ProductDetail({ product, onAddToCart, onBack }: ProductDetailProps) {
+  const price = parseFloat(product.precio.replace('BS ', ''));
+  const stock = parseInt(product.stock);
 
   return (
-    <div className="min-h-full bg-white">
-      {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 z-10">
-        <button
-          onClick={onBack}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h2 className="text-lg">Detalle del Producto</h2>
-      </div>
-
-      {/* Product Image */}
-      <div className="relative">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-64 object-cover"
-        />
-        {product.requiresPrescription && (
-          <div className="absolute top-4 right-4">
-            <Badge variant="destructive" className="text-sm">
-              Requiere Receta Médica
-            </Badge>
-          </div>
-        )}
-      </div>
-
-      <div className="p-4 space-y-4">
-        {/* Product Info */}
-        <div>
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex-1">
-              <h1 className="text-xl mb-1">{product.name}</h1>
-              <Badge variant="outline" className="mb-2">
-                {product.category}
-              </Badge>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl text-primary">Bs. {product.price.toFixed(2)}</p>
-              <p className="text-sm text-muted-foreground">por unidad</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2 text-sm">
-            <Badge variant={product.stock > 50 ? "default" : "secondary"}>
-              {product.stock > 50 ? "Disponible" : "Stock Limitado"}
-            </Badge>
-            <span className="text-muted-foreground">
-              {product.stock} unidades disponibles
-            </span>
-          </div>
-        </div>
-
-        {/* Description */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Descripción</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {product.description}
-          </CardContent>
-        </Card>
-
-        {/* Active Ingredient */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Principio Activo</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm">
-            {product.activeIngredient}
-          </CardContent>
-        </Card>
-
-        {/* Prescription Warning */}
-        {product.requiresPrescription && (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="p-4 flex gap-3">
-              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="text-red-900 mb-1">
-                  Este medicamento requiere receta médica
-                </p>
-                <p className="text-red-700 text-xs">
-                  Deberás presentar tu receta al momento de recoger el producto en farmacia
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Quantity Selector */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Cantidad</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={decrementQuantity}
-                disabled={quantity <= 1}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <span className="text-2xl w-12 text-center">{quantity}</span>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={incrementQuantity}
-                disabled={quantity >= product.stock}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-              <div className="flex-1 text-right">
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-xl text-primary">
-                  Bs. {(product.price * quantity).toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Success Message */}
-        {showSuccess && (
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="p-4 flex items-center gap-2">
-              <Check className="h-5 w-5 text-green-600" />
-              <p className="text-sm text-green-900">
-                ¡Reserva realizada exitosamente! Tienes 24 horas para recogerlo.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Action Buttons */}
-        <div className="space-y-3 pb-4">
-          <Button
-            className="w-full gap-2"
-            size="lg"
-            onClick={() => setShowReserveDialog(true)}
-            disabled={product.stock === 0}
+    <div className="min-h-screen bg-gray-50">
+      {/* Breadcrumb */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-3">
+          <button 
+            onClick={onBack}
+            className="flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors"
           >
-            <BookmarkCheck className="h-5 w-5" />
-            Reservar Producto
-          </Button>
-        </div>
-
-        {/* Additional Info */}
-        <div className="bg-blue-50 rounded-lg p-4 space-y-2 text-sm">
-          <p className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-            <span className="text-blue-900">Reserva válida por 24 horas</span>
-          </p>
-          <p className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-            <span className="text-blue-900">Retiro gratis en sucursal</span>
-          </p>
-          <p className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-            <span className="text-blue-900">Sin costo de reserva</span>
-          </p>
+            <ChevronLeft className="w-4 h-4" />
+            <span className="text-sm">Inicio &gt; {product.categoria} &gt; {product.name}</span>
+          </button>
         </div>
       </div>
 
-      {/* Reserve Dialog */}
-      <Dialog open={showReserveDialog} onOpenChange={setShowReserveDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Selecciona tu sucursal</DialogTitle>
-            <DialogDescription>
-              Elige dónde recogerás tu reserva. Tendrás 24 horas para retirarla.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <RadioGroup value={selectedLocation} onValueChange={setSelectedLocation}>
-              <div className="space-y-3">
-                {sucursales.map((sucursal) => (
-                  <div key={sucursal.id} className="flex items-start space-x-3">
-                    <RadioGroupItem value={sucursal.id} id={sucursal.id} className="mt-1" />
-                    <Label htmlFor={sucursal.id} className="flex-1 cursor-pointer">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-sm mb-1">{sucursal.nombre}</p>
-                          <p className="text-xs text-muted-foreground">{sucursal.direccion}</p>
-                          <p className="text-xs text-muted-foreground">{sucursal.telefono}</p>
-                        </div>
-                      </div>
-                    </Label>
-                  </div>
-                ))}
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Image Section */}
+            <div className="relative">
+              
+              
+              <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
+                <ImageWithFallback
+                  src={product.imagen}
+                  alt={product.name}
+                  className="w-full h-full object-contain p-8"
+                />
               </div>
-            </RadioGroup>
-          </div>
+            </div>
 
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-2">
-            <p className="text-sm text-orange-900">
-              <strong>Resumen de tu reserva:</strong>
-            </p>
-            <p className="text-sm text-orange-800 mt-1">
-              {quantity} x {product.name}
-            </p>
-            <p className="text-sm text-orange-800">
-              Total: Bs. {(product.price * quantity).toFixed(2)}
-            </p>
-          </div>
+            {/* Info Section */}
+            <div className="flex flex-col">
+              <div className="text-gray-500 text-sm mb-2">{product.categoria}</div>
+              <h1 className="text-2xl md:text-3xl text-gray-800 mb-4">{product.name}</h1>
+              
+              <div className="flex items-center gap-4 mb-6 text-sm">
+                <div className={`px-3 py-1 rounded-full ${
+                  stock > 50 ? 'bg-green-100 text-green-800' :
+                  stock > 10 ? 'bg-orange-100 text-orange-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {stock} disponibles
+                </div>
+                <div className="flex items-center gap-1 text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  Caduca: {new Date(product.caducidad).toLocaleDateString()}
+                </div>
+              </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReserveDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleReserve} disabled={loading} className="gap-2">
-              <BookmarkCheck className="h-4 w-4" />
-              {loading ? "Creando reserva..." : "Confirmar Reserva"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              {/* Price Section */}
+              <div className="mb-6">
+                <div className="text-4xl text-orange-600 mb-2">
+                  {product.precio}
+                </div>
+                {product.recetaRequerida === "Si" && (
+                  <div className="text-red-600 text-sm font-medium">
+                    ⚠️ Requiere receta médica
+                  </div>
+                )}
+              </div>
+
+              {/* Add to Cart Button */}
+              <button
+                onClick={() => onAddToCart(product.id)}
+                disabled={stock === 0}
+                className={`w-full md:w-auto py-4 px-12 rounded-lg flex items-center justify-center gap-3 transition-colors mb-8 ${
+                  stock === 0
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-orange-500 hover:bg-orange-600 text-white'
+                }`}
+              >
+                <span className="text-lg">{stock === 0 ? 'Sin stock' : 'Agregar al carrito'}</span>
+                {stock > 0 && <ShoppingCart className="w-5 h-5" />}
+              </button>
+
+              {/* Additional Info */}
+              <div className="space-y-4 border-t pt-6">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <User className="w-4 h-4" />
+                  <span>Proveedor: {product.proveedor}</span>
+                </div>
+                
+                <div>
+                  <h2 className="text-xl text-gray-800 mb-4">Descripción</h2>
+                  <p className="text-gray-600 leading-relaxed">{product.descripcion}</p>
+                </div>
+
+                <div>
+                  <h2 className="text-xl text-gray-800 mb-4">Estado del producto</h2>
+                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    product.estado === "Óptimo" ? 'bg-green-100 text-green-800' :
+                    product.estado === "Bajo" ? 'bg-orange-100 text-orange-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {product.estado}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default ProductDetail;
+}
