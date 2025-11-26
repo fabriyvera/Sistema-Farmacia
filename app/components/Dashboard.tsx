@@ -66,7 +66,7 @@ const Dashboard = () => {
   const cancelarReserva = async (reservaId: string) => {
     try {
       await apiService.updateReserva(reservaId, {
-        estado: 'cancelada'
+        estado: 'cancelado'
       });
       await cargarDatos();
       alert('Reserva cancelada');

@@ -9,6 +9,7 @@ import { ProductDetail } from "./components/ProductDetail";
 import { Footer } from "./components/Footer";
 import { ReservationStatus } from "./components/ReservationStatus";
 import { Producto, CartItem, Sucursal, Reserva } from "@/types/reservas";
+import { useRouter } from "next/navigation"; // Importa useRouter
 
 const categories = [
   { id: 1, name: "Medicamentos", icon: "/drug_4136031.png", itemCount: 0 },
@@ -20,6 +21,7 @@ const categories = [
 ];
 
 export default function App() {
+  const router = useRouter(); // Inicializa el router
   const [products, setProducts] = useState<Producto[]>([]);
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [reservas, setReservas] = useState<Reserva[]>([]);
@@ -101,50 +103,18 @@ export default function App() {
     }
   };
 
-  // Función para manejar la búsqueda
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    // Si hay término de búsqueda, quitamos el filtro de categoría
-    if (term) {
-      setSelectedCategory(null);
-    }
-  };
-
-  // Filtrar productos según búsqueda y categoría
-  const getFilteredProducts = () => {
-    let filtered = products;
-
-    // Aplicar filtro de categoría si existe
-    if (selectedCategory) {
-      filtered = filtered.filter(product => 
-        product.categoria.toLowerCase() === selectedCategory.toLowerCase()
-      );
-    }
-
-    // Aplicar filtro de búsqueda si existe
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(term) ||
-        product.descripcion.toLowerCase().includes(term) ||
-        product.categoria.toLowerCase().includes(term)
-      );
-    }
-
-    return filtered;
-  };
-
-  const filteredProducts = getFilteredProducts();
-
-  // Update category counts based on actual products
-  const updatedCategories = categories.map(category => {
-    const count = products.filter(product => 
-      product.categoria.toLowerCase() === category.name.toLowerCase()
-    ).length;
-    return { ...category, itemCount: count };
-  });
-
+  // 🔹 MODIFICADO: Función para manejar agregar al carrito con verificación de autenticación
   const handleAddToCart = (productId: string) => {
+    // Verificar si el usuario está autenticado
+    if (!isAuthenticated) {
+      // Guardar el producto que intentó agregar para después del login
+      sessionStorage.setItem('pendingProduct', productId);
+      // Redirigir a la página de login
+      router.push('/login');
+      return;
+    }
+
+    // Si está autenticado, proceder a agregar al carrito
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
@@ -174,6 +144,24 @@ export default function App() {
     setIsCartOpen(true);
   };
 
+  // 🔹 NUEVO: Función para manejar productos pendientes después del login
+  useEffect(() => {
+    const handlePendingProduct = () => {
+      if (isAuthenticated) {
+        const pendingProductId = sessionStorage.getItem('pendingProduct');
+        if (pendingProductId) {
+          // Agregar el producto pendiente al carrito
+          handleAddToCart(pendingProductId);
+          // Limpiar el producto pendiente
+          sessionStorage.removeItem('pendingProduct');
+        }
+      }
+    };
+
+    handlePendingProduct();
+  }, [isAuthenticated]);
+
+  // Resto de las funciones permanecen igual...
   const handleUpdateQuantity = (productId: string, quantity: number) => {
     setCartItems(prev =>
       prev.map(item =>
@@ -193,10 +181,10 @@ export default function App() {
   const handleCategoryClick = (categoryName: string) => {
     if (selectedCategory === categoryName) {
       setSelectedCategory(null);
-      setSearchTerm(""); // Limpiar búsqueda al deseleccionar categoría
+      setSearchTerm("");
     } else {
       setSelectedCategory(categoryName);
-      setSearchTerm(""); // Limpiar búsqueda al seleccionar categoría
+      setSearchTerm("");
     }
     setShowAllProducts(false);
   };
@@ -217,6 +205,46 @@ export default function App() {
     setUserData(null);
     window.location.href = '/';
   };
+
+  // Función para manejar la búsqueda
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    if (term) {
+      setSelectedCategory(null);
+    }
+  };
+
+  // Filtrar productos según búsqueda y categoría
+  const getFilteredProducts = () => {
+    let filtered = products;
+
+    if (selectedCategory) {
+      filtered = filtered.filter(product => 
+        product.categoria.toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(term) ||
+        product.descripcion.toLowerCase().includes(term) ||
+        product.categoria.toLowerCase().includes(term)
+      );
+    }
+
+    return filtered;
+  };
+
+  const filteredProducts = getFilteredProducts();
+
+  // Update category counts based on actual products
+  const updatedCategories = categories.map(category => {
+    const count = products.filter(product => 
+      product.categoria.toLowerCase() === category.name.toLowerCase()
+    ).length;
+    return { ...category, itemCount: count };
+  });
 
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -247,7 +275,7 @@ export default function App() {
         />
         <ProductDetail
           product={selectedProduct}
-          onAddToCart={handleAddToCart}
+          onAddToCart={handleAddToCart} // 🔹 Se pasa la función modificada
           onBack={() => setSelectedProduct(null)}
         />
         <CartSheet
@@ -313,7 +341,7 @@ export default function App() {
           products={filteredProducts}
           selectedCategory={selectedCategory}
           searchTerm={searchTerm}
-          onAddToCart={handleAddToCart}
+          onAddToCart={handleAddToCart} // 🔹 Se pasa la función modificada
           onProductClick={handleProductClick}
           showAll={showAllProducts}
           onShowMore={handleShowMore}

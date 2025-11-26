@@ -1,6 +1,6 @@
 "use client";
 import { Card, CardContent } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { Badge } from "./ui/badge"; // Importar Badge
 import { Star, Percent, TrendingUp, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiService } from "@/lib/api";
@@ -8,9 +8,10 @@ import { Producto, Product } from "@/types/reservas";
 
 interface HomeViewProps {
   onSelectProduct: (product: Product) => void;
+  onAddToCart: (productId: string) => void;
 }
 
-const HomeView = ({ onSelectProduct }: HomeViewProps) => {
+const HomeView = ({ onSelectProduct, onAddToCart }: HomeViewProps) => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [discountProducts, setDiscountProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,7 @@ const HomeView = ({ onSelectProduct }: HomeViewProps) => {
     stock: parseInt(producto.stock),
     requiresPrescription: producto.recetaRequerida === "Si",
     description: producto.descripcion,
-    activeIngredient: producto.descripcion.split('.')[0] // Usar primera parte de la descripción
+    activeIngredient: producto.descripcion.split('.')[0]
   });
 
   useEffect(() => {
@@ -33,13 +34,8 @@ const HomeView = ({ onSelectProduct }: HomeViewProps) => {
       try {
         const productos = await apiService.getProductos();
         
-        // Convertir productos de API a formato de cliente
         const products = productos.map(convertProductoToProduct);
-        
-        // Productos destacados (primeros 4)
         setFeaturedProducts(products.slice(0, 4));
-        
-        // Productos en oferta (podrías filtrar por algún criterio)
         setDiscountProducts(products.slice(4, 6));
         
       } catch (error) {
@@ -120,12 +116,25 @@ const HomeView = ({ onSelectProduct }: HomeViewProps) => {
                     {product.category}
                   </p>
                   <div className="flex items-center justify-between">
-                    <span className="text-primary">Bs. {product.price.toFixed(2)}</span>
-                    {product.requiresPrescription && (
-                      <Badge variant="destructive" className="text-xs">
-                        Receta
+                    <span className="text-primary font-medium">
+                      Bs. {product.price.toFixed(2)}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {product.requiresPrescription && (
+                        <Badge variant="destructive" className="text-xs">
+                          Receta
+                        </Badge>
+                      )}
+                      <Badge 
+                        className="cursor-pointer bg-orange-500 hover:bg-orange-600 text-white transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToCart(product.id);
+                        }}
+                      >
+                        Agregar
                       </Badge>
-                    )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -158,10 +167,23 @@ const HomeView = ({ onSelectProduct }: HomeViewProps) => {
                   <p className="text-xs text-muted-foreground mb-2">
                     {product.category}
                   </p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-primary">Bs. {product.price.toFixed(2)}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      -15% OFF
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-primary font-medium">
+                        Bs. {product.price.toFixed(2)}
+                      </span>
+                      <Badge variant="secondary" className="text-xs">
+                        -15% OFF
+                      </Badge>
+                    </div>
+                    <Badge 
+                      className="cursor-pointer bg-orange-500 hover:bg-orange-600 text-white transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddToCart(product.id);
+                      }}
+                    >
+                      Agregar
                     </Badge>
                   </div>
                 </div>
@@ -177,14 +199,18 @@ const HomeView = ({ onSelectProduct }: HomeViewProps) => {
           <CardContent className="p-4 text-center">
             <Clock className="h-6 w-6 text-blue-600 mx-auto mb-2" />
             <p className="text-sm mb-1">Reserva</p>
-            <p className="text-xs text-muted-foreground">Válida 24 horas</p>
+            <Badge variant="outline" className="text-xs">
+              Válida 24 horas
+            </Badge>
           </CardContent>
         </Card>
         <Card className="bg-green-50 border-green-200">
           <CardContent className="p-4 text-center">
             <TrendingUp className="h-6 w-6 text-green-600 mx-auto mb-2" />
             <p className="text-sm mb-1">Retiro</p>
-            <p className="text-xs text-muted-foreground">Sin costo</p>
+            <Badge variant="outline" className="text-xs">
+              Sin costo
+            </Badge>
           </CardContent>
         </Card>
       </div>
