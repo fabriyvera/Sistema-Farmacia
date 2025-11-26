@@ -172,17 +172,17 @@ const RegisterEmployee = () => {
     }
 
     const newAdmin = {
-      nm_adm: username,  // CORREGIDO: nrm_adm → nm_adm
+      nm_adm: username,  
       pw_adm: password,
       nms_adm: nombres,
       app_adm: apPaterno,
-      apm_adm: apMaterno, // CORREGIDO: aprm_adm → apm_adm
+      apm_adm: apMaterno,
       fk_rl: 0,
       fk_sc: parseInt(sucursal) || 0,
       st_adm: estado === "1" ? 1 : 0,
       em_adm: email,
       tl_adm: telefono,
-      ds_adm: direccion, // INCLUIDO: dirección desde el mapa
+      ds_adm: direccion, 
     };
 
     console.log('Enviando datos al backend:', newAdmin);
