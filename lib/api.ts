@@ -6,8 +6,37 @@ const API_BASE = {
   ventas: 'https://690a052a1a446bb9cc2104c7.mockapi.io/Ventas',
   sucursales: 'https://690a052a1a446bb9cc2104c7.mockapi.io/Sucursales',
 };
+export interface Cliente {
+  id_ct: string;
+  nm_ct: string; 
+  tl_ct: string; 
+  em_ct: string; 
+  ds_ct: string; 
+  nc_ct: string; 
+}
 
 export const apiService = {
+  async getClientes(): Promise<Cliente[]> {
+    try {
+      const response = await fetch('/api/clientes');
+      if (!response.ok) throw new Error('Error obteniendo clientes');
+      return response.json();
+    } catch (error) {
+      console.error('Error:', error);
+      return [];
+    }
+  },
+  async getClienteById(id: string): Promise<Cliente | null> {
+    try {
+      const response = await fetch(`/api/clientes/${id}`);
+      if (!response.ok) throw new Error('Error obteniendo cliente');
+      return response.json();
+    } catch (error) {
+      console.error('Error:', error);
+      return null;
+    }
+  },
+
   // Productos
   async getProductos(): Promise<Producto[]> {
     const response = await fetch(API_BASE.productos);

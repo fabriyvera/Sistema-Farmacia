@@ -6,7 +6,6 @@ export async function POST(request: NextRequest) {
   try {
     const clientData = await request.json();
 
-    // Validar datos requeridos
     const requiredFields = ['nm_ct', 'tl_ct', 'em_ct', 'ds_ct', 'pw_ct', 'nc_ct'];
     const missingFields = requiredFields.filter(field => !clientData[field]);
 
@@ -20,7 +19,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar que el username no exista
     pool = await connectDB();
 
     const checkUserQuery = `
@@ -41,7 +39,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar que el email no exista
     const checkEmailQuery = `
       SELECT em_ct FROM ct_mst WHERE em_ct = @em_ct
     `;
@@ -60,7 +57,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Insertar en la tabla ct_mst
     const insertQuery = `
       INSERT INTO ct_mst (
         nm_ct, tl_ct, em_ct, ds_ct, pw_ct, nc_ct

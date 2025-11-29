@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
 
     pool = await connectDB();
 
-    // Buscar en administradores (adm_mst)
     const adminResult = await pool.request()
       .input('username', username)
       .input('password', password)
@@ -44,7 +43,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Buscar en clientes (ct_mst)
     const clientResult = await pool.request()
       .input('username', username)
       .input('password', password)
@@ -71,14 +69,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: false,
       error: 'Credenciales incorrectas'
-    }, { status: 401 });
+    }, { status: 401 }); //401=acceso no autorizado
 
   } catch (error: unknown) {
     console.error('Error en login:', error);
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 });
+    }, { status: 500 });//500=error interno del servidor
   } finally {
     if (pool) {
       await pool.close();

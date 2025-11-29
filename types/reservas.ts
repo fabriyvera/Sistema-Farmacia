@@ -13,6 +13,15 @@ export interface Producto {
   createdAt: string;
 }
 
+export interface Cliente {
+  id_ct: string;
+  nm_ct: string;
+  tl_ct: string;
+  em_ct: string;
+  ds_ct: string;
+  nc_ct: string;
+}
+
 export interface Reserva {
   id: string;
   productoId: string;
@@ -29,12 +38,12 @@ export interface Reserva {
 
 
 export interface Venta {
-  id: string;
+  id?: string;
   productoId: string;
-  clienteId: string;
-  usuarioId: string;
+  clienteId: string; // id_ct de tu base de datos
+  usuarioId: string; // id del usuario/admin que confirmó
   total: string;
-  cantidad: string;
+  cantidad: number;
   fecha: string;
   pago: string;
 }
