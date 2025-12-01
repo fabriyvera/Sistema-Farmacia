@@ -2,9 +2,9 @@ export interface Producto {
   id: string;
   name: string;
   descripcion: string;
-  precio: string;
-  stock: string;
-  categoria: string;
+  precio: number;
+  stock?: string;
+  categoria?: string;
   imagen: string;
   estado: string;
   proveedor: string;
@@ -22,31 +22,36 @@ export interface Cliente {
   nc_ct: string;
 }
 
+
 export interface Reserva {
   id: string;
   productoId: string;
   fecha: string;
-  cantidad: string;
-  estado: 'pendiente' | 'confirmada' | 'completada' | 'cancelado' | 'completado';
-  createdAt: string;
-  clienteId?: string;
-  clienteNombre?: string;
+  cantidad: string; // La API devuelve string
+  estado: 'pendiente' | 'completada' | 'cancelado';
+  productoNombre?: string;
   sucursalId?: string;
   sucursalNombre?: string;
-  productoNombre?: string; // Nuevo campo
+  clienteId?: string;
+  createdAt?: string;
 }
 
 
 export interface Venta {
   id?: string;
   productoId: string;
-  clienteId: string; // id_ct de tu base de datos
-  usuarioId: string; // id del usuario/admin que confirmó
-  total: string;
-  cantidad: number;
+  clienteId: string;
+  usuarioId: string;
+  total: string; // La API espera string, no number
+  cantidad: string; // La API espera string, no number
   fecha: string;
   pago: string;
+  productoNombre?: string;
+  precioUnitario?: string;
 }
+
+
+
 declare global {
   interface Window {
     google: typeof google;

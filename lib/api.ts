@@ -82,17 +82,27 @@ export const apiService = {
     });
   },
 
-  // Ventas
-  async createVenta(venta: Omit<Venta, 'id'>): Promise<Venta> {
-    const response = await fetch(API_BASE.ventas, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(venta),
-    });
-    return response.json();
-  },
+async createVenta(venta: Omit<Venta, 'id'>): Promise<Venta> {
+  console.log('Enviando datos de venta:', venta);
+  
+  const response = await fetch(API_BASE.ventas, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      ...venta,
+      total: venta.total.toString(), // Convertir a string si tu API lo requiere
+      cantidad: venta.cantidad.toString(),
+    }),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Error creando venta: ${response.statusText}`);
+  }
+  
+  return response.json();
+},
 
   async getVentas(): Promise<Venta[]> {
     const response = await fetch(API_BASE.ventas);
