@@ -70,10 +70,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Obtener conexión
     pool = await connectDB();
 
-    // Insertar en la base de datos SQL Server
     const query = `
       INSERT INTO adm_mst (
         nm_adm, pw_adm, nms_adm, app_adm, apm_adm, 

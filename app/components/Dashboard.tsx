@@ -1,6 +1,6 @@
 "use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Users, Package, Building2, ShoppingCart, TrendingUp, AlertCircle, CheckCircle, XCircle } from "lucide-react";
+import { ShoppingCart, AlertCircle, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiService } from "@/lib/api";
 import { Producto, Reserva, Venta } from "@/types/reservas";
@@ -10,6 +10,7 @@ const Dashboard = () => {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<string | null>(null);
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -41,39 +42,83 @@ const Dashboard = () => {
     return producto ? producto.name : 'Producto no encontrado';
   };
 
-  // Confirmar recogida de reserva
+  // CONFIRMAR RECOGIDA - SIN RECARGA AUTOMÁTICA
   const confirmarRecogida = async (reserva: Reserva) => {
     try {
-      // 1. Actualizar estado de la reserva
+      setUpdating(reserva.id);
+      
+      // Actualización optimista INMEDIATA
+      setReservas(prevReservas => 
+        prevReservas.map(r => 
+          r.id === reserva.id ? { ...r, estado: 'completada' } : r
+        )
+      );
+
+      // Actualizar en el servidor (pero no recargar datos)
       await apiService.updateReserva(reserva.id, {
         ...reserva,
         estado: 'completada'
       });
 
-      // 2. Crear una venta (opcional, si quieres registrar la transacción)
+      // Mensaje de éxito SIN recargar datos
+      alert('Reserva confirmada como recogida - Los datos se actualizarán en la próxima recarga');
       
-      // 3. Recargar datos
-      await cargarDatos();
-      
-      alert('Reserva confirmada como recogida');
     } catch (error) {
       console.error('Error confirmando recogida:', error);
+      
+      // Revertir en caso de error
+      setReservas(prevReservas => 
+        prevReservas.map(r => 
+          r.id === reserva.id ? { ...r, estado: reserva.estado } : r
+        )
+      );
+      
       alert('Error al confirmar la recogida');
+    } finally {
+      setUpdating(null);
     }
   };
 
-  // Cancelar reserva
+  // CANCELAR RESERVA - SIN RECARGA AUTOMÁTICA
   const cancelarReserva = async (reservaId: string) => {
     try {
+      setUpdating(reservaId);
+      
+      // Actualización optimista INMEDIATA
+      setReservas(prevReservas => 
+        prevReservas.map(r => 
+          r.id === reservaId ? { ...r, estado: 'cancelado' } : r
+        )
+      );
+
+      // Actualizar en servidor (pero no recargar datos)
       await apiService.updateReserva(reservaId, {
-        estado: 'cancelada'
+        estado: 'cancelado'
       });
-      await cargarDatos();
-      alert('Reserva cancelada');
+
+      // Mensaje de éxito SIN recargar datos
+      alert('Reserva cancelada - Los datos se actualizarán en la próxima recarga');
+      
     } catch (error) {
       console.error('Error cancelando reserva:', error);
+      
+      // Revertir en caso de error
+      setReservas(prevReservas => 
+        prevReservas.map(r => 
+          r.id === reservaId ? { ...r, estado: 'pendiente' } : r
+        )
+      );
+      
       alert('Error al cancelar la reserva');
+    } finally {
+      setUpdating(null);
     }
+  };
+
+  // Función para generar claves únicas
+  const generarKeyUnica = (reserva: Reserva, index: number) => {
+    // Usar una combinación de id + índice para garantizar unicidad
+    return `${reserva.id}-${index}-${reserva.fecha}`;
   };
 
   // Estadísticas
@@ -82,7 +127,6 @@ const Dashboard = () => {
   const totalVentasHoy = ventas.filter(v => 
     new Date(v.fecha).toDateString() === new Date().toDateString()
   ).length;
-
 
   if (loading) {
     return (
@@ -96,11 +140,21 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Panel de Control</h1>
-        <p className="text-muted-foreground">
-          Bienvenido al sistema CATEFARM - Gestión Integral de Farmacias
-        </p>
+      {/* Encabezado con botón de recarga manual */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Panel de Control</h1>
+          <p className="text-muted-foreground">
+            Bienvenido al sistema CATEFARM - Gestión Integral de Farmacias
+          </p>
+        </div>
+        <button
+          onClick={cargarDatos}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Recargar Datos
+        </button>
       </div>
 
       {/* Estadísticas */}
@@ -146,7 +200,6 @@ const Dashboard = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-
         {/* Reservas Pendientes */}
         <Card>
           <CardHeader>
@@ -158,11 +211,13 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {reservas.filter(r => r.estado === 'pendiente').map((reserva) => (
-                <div key={reserva.id} className="flex items-center justify-between p-3 border rounded-lg">
+              {reservas
+                .filter(r => r.estado === 'pendiente')
+                .map((reserva, index) => (
+                <div key={generarKeyUnica(reserva, index)} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex-1">
                     <p className="font-medium text-sm">
-                      {getNombreProducto(reserva.productoId)}
+                      {reserva.productoNombre || getNombreProducto(reserva.productoId)}
                     </p>
                     <div className="text-xs text-muted-foreground space-y-1">
                       <p>Cantidad: {reserva.cantidad}</p>
@@ -173,14 +228,22 @@ const Dashboard = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => confirmarRecogida(reserva)}
-                      className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-2 rounded flex items-center gap-1"
+                      disabled={updating === reserva.id}
+                      className="bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white text-xs px-3 py-2 rounded flex items-center gap-1"
                     >
-                      <CheckCircle className="h-3 w-3" />
-                      Confirmar
+                      {updating === reserva.id ? (
+                        'Procesando...'
+                      ) : (
+                        <>
+                          <CheckCircle className="h-3 w-3" />
+                          Confirmar
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={() => cancelarReserva(reserva.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-2 rounded flex items-center gap-1"
+                      disabled={updating === reserva.id}
+                      className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-xs px-3 py-2 rounded flex items-center gap-1"
                     >
                       <XCircle className="h-3 w-3" />
                       Cancelar
@@ -208,13 +271,14 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {reservas.filter(r => r.estado === 'completada')
+              {reservas
+                .filter(r => r.estado === 'completada')
                 .slice(0, 5)
-                .map((reserva) => (
-                <div key={reserva.id} className="flex items-center justify-between p-2 border-b">
+                .map((reserva, index) => (
+                <div key={generarKeyUnica(reserva, index)} className="flex items-center justify-between p-2 border-b">
                   <div>
                     <p className="text-sm font-medium">
-                      {getNombreProducto(reserva.productoId)}
+                      {reserva.productoNombre || getNombreProducto(reserva.productoId)}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Cantidad: {reserva.cantidad} • {new Date(reserva.fecha).toLocaleDateString()}
