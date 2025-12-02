@@ -83,9 +83,9 @@ export function ProductListClient({
                 key={product.id}
                 id={product.id}
                 name={product.name}
-                price={parseFloat(product.precio.replace('BS ', ''))}
+                price={product.precio}
                 image={product.imagen}
-                stock={parseInt(product.stock)}
+                stock={product.stock}
                 onAddToCart={onAddToCart}
                 onClick={onProductClick}
               />

@@ -7,33 +7,39 @@ import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
+// Definimos el ID especial para clientes de mostrador (sin cuenta)
+const CLIENTE_MOSTRADOR_ID = "0"; 
+
 interface Product {
   id: string;
   name: string;
   price: number;
 }
 
+// Interfaz actualizada con tipos numéricos correctos
 interface SaleForm {
   productoId: string;
   clienteId: string;
   usuarioId: string;
-  total: string; // total a cobrar
-  cantidad: string;
+  total: number;     // Ahora es number
+  cantidad: number;  // Ahora es number
   fecha: string;
   pago: string;
+  productoNombre?: string; // Opcional, útil para la UI
 }
 
 const RegisterSale: React.FC = () => {
   const [form, setForm] = useState<SaleForm>({
     productoId: "",
-    clienteId: "",
-    usuarioId: "3",
-    total: "",
-    cantidad: "1",
+    clienteId: CLIENTE_MOSTRADOR_ID, // ID fijo por defecto
+    usuarioId: "3", // ID del cajero/admin actual
+    total: 0,
+    cantidad: 1,
     fecha: new Date().toISOString(),
     pago: "efectivo"
   });
 
+  // Idealmente esto vendría de tu apiService.getProductos()
   const availableProducts: Product[] = [
     { id: "1", name: "Paracetamol 500mg", price: 25.5 },
     { id: "2", name: "Ibuprofeno 400mg", price: 35 },
@@ -48,32 +54,48 @@ const RegisterSale: React.FC = () => {
   const handleProductSelect = (productId: string) => {
     const product = availableProducts.find(p => p.id === productId);
     if (product) {
-      setForm({
-        ...form,
+      setForm(prev => ({
+        ...prev,
         productoId: product.id,
-        total: (product.price * parseInt(form.cantidad)).toString() // total a cobrar
-      });
+        productoNombre: product.name,
+        // Calculamos el total usando números reales
+        total: Number((product.price * prev.cantidad).toFixed(2))
+      }));
     }
   };
 
-  const handleCantidadChange = (cantidad: string) => {
+  const handleCantidadChange = (cantidadInput: string) => {
+    // Aseguramos que sea al menos 1
+    const nuevaCantidad = parseInt(cantidadInput) || 0;
+    
     setForm(prev => {
       const product = availableProducts.find(p => p.id === prev.productoId);
-      const total = product ? product.price * parseInt(cantidad) : 0;
-      return { ...prev, cantidad, total: total.toString() };
+      const nuevoTotal = product ? product.price * nuevaCantidad : 0;
+      
+      return { 
+        ...prev, 
+        cantidad: nuevaCantidad, 
+        total: Number(nuevoTotal.toFixed(2)) // Redondear a 2 decimales para evitar 10.000000001
+      };
     });
   };
 
   const handleSubmit = async () => {
-    if (!form.clienteId || !form.productoId || !form.total || !form.cantidad) {
-      alert("Completa todos los campos");
+    if (!form.productoId || form.cantidad <= 0) {
+      alert("Por favor selecciona un producto y una cantidad válida");
       return;
     }
 
-    const payload: SaleForm = {
+    // Preparamos el payload asegurando tipos numéricos
+    const payload = {
       ...form,
+      clienteId: CLIENTE_MOSTRADOR_ID, // Forzamos el ID de cliente de paso
+      total: Number(form.total),       // Aseguramos envío como número
+      cantidad: Number(form.cantidad), // Aseguramos envío como número
       fecha: new Date().toISOString()
     };
+
+    console.log("Enviando venta:", payload);
 
     try {
       const res = await fetch("https://690a052a1a446bb9cc2104c7.mockapi.io/Ventas", {
@@ -84,15 +106,18 @@ const RegisterSale: React.FC = () => {
 
       if (!res.ok) throw new Error("Error al registrar la venta");
 
-      await res.json();
-      alert("Venta registrada correctamente");
+      const data = await res.json();
+      console.log("Venta registrada:", data);
+      
+      alert(`Venta registrada correctamente.\nTotal: Bs. ${form.total}`);
 
+      // Resetear formulario
       setForm({
         productoId: "",
-        clienteId: "",
+        clienteId: CLIENTE_MOSTRADOR_ID,
         usuarioId: "3",
-        total: "",
-        cantidad: "1",
+        total: 0,
+        cantidad: 1,
         fecha: new Date().toISOString(),
         pago: "efectivo"
       });
@@ -105,20 +130,13 @@ const RegisterSale: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Registrar Venta</CardTitle>
-        <CardDescription>Completa los detalles de la venta</CardDescription>
+        <CardTitle>Registrar Venta de Mostrador</CardTitle>
+        <CardDescription>Venta rápida para clientes sin cuenta</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="clienteId">ID Cliente</Label>
-          <Input
-            id="clienteId"
-            placeholder="Ej: 5"
-            value={form.clienteId}
-            onChange={e => setForm({ ...form, clienteId: e.target.value })}
-          />
-        </div>
-
+        
+        {/* Campo de Cliente eliminado visualmente porque es fijo */}
+        
         <div className="grid gap-2">
           <Label htmlFor="productoId">Producto</Label>
           <Select value={form.productoId} onValueChange={handleProductSelect}>
@@ -128,7 +146,7 @@ const RegisterSale: React.FC = () => {
             <SelectContent>
               {availableProducts.map(product => (
                 <SelectItem key={product.id} value={product.id}>
-                  {product.name} - Bs.{product.price}
+                  {product.name} - Bs. {product.price}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -148,31 +166,30 @@ const RegisterSale: React.FC = () => {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="total">Total a cobrar</Label>
-            <Input
-              id="total"
-              type="number"
-              value={form.total}
-              readOnly
-            />
+            <Label htmlFor="total">Total a cobrar (Bs.)</Label>
+            <div className="flex h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50">
+                {form.total > 0 ? form.total.toFixed(2) : "0.00"}
+            </div>
           </div>
         </div>
 
         <div className="grid gap-2">
           <Label htmlFor="pago">Método de Pago</Label>
-          <Select value={form.pago} onValueChange={value => setForm({ ...form, pago: value })}>
+          <Select value={form.pago} onValueChange={value => setForm(prev => ({ ...prev, pago: value }))}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="efectivo">Efectivo</SelectItem>
               <SelectItem value="tarjeta">Tarjeta</SelectItem>
-              <SelectItem value="transferencia">Transferencia</SelectItem>
+              <SelectItem value="transferencia">Transferencia QR</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <Button onClick={handleSubmit}>Registrar Venta</Button>
+        <Button onClick={handleSubmit} className="w-full bg-orange-500 hover:bg-orange-600">
+            Confirmar Venta (Bs. {form.total.toFixed(2)})
+        </Button>
       </CardContent>
     </Card>
   );

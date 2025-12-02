@@ -19,7 +19,6 @@ import {
   Users,
   Package,
   UserCircle,
-  Settings,
   Pill,
   FileText,
   ShoppingCart,
@@ -41,7 +40,7 @@ import ListandSearch from "../components/ListandSearch";
 import SaleList from "../components/SaleList";
 import RegisterSale from "../components/RegisterSale";
 const App = () => {
-  const [activeView, setActiveView] = useState("sales");
+  const [activeView, setActiveView] = useState("dashboard");
   const [staffSubmenuOpen, setStaffSubmenuOpen] = useState(false);
   const [productsSubmenuOpen, setProductsSubmenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);

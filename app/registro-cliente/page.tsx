@@ -121,21 +121,6 @@ export default function RegisterClientPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Nombre Completo */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre Completo *
-                </label>
-                <input
-                  name="nc_ct"
-                  value={formData.nc_ct}
-                  onChange={handleChange}
-                  required
-                  placeholder="Ej: Juan Pérez López"
-                  className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                />
-              </div>
-
               {/* Username */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -147,6 +132,77 @@ export default function RegisterClientPage() {
                   onChange={handleChange}
                   required
                   placeholder="Ej: juan.perez"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                />
+              </div>
+
+              {/* Contraseña */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contraseña *
+                </label>
+                <div className="relative">
+                  <input
+                    name="pw_ct"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.pw_ct}
+                    onChange={handleChange}
+                    required
+                    placeholder="Mínimo 6 caracteres"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              {/* Confirmar Contraseña */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirmar Contraseña *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    placeholder="Repite tu contraseña"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Nombre Completo */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre Completo *
+                </label>
+                <input
+                  name="nc_ct"
+                  value={formData.nc_ct}
+                  onChange={handleChange}
+                  required
+                  placeholder="Ej: Juan Pérez López"
                   className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
                 />
               </div>
@@ -197,62 +253,6 @@ export default function RegisterClientPage() {
                 />
               </div>
 
-              {/* Contraseña */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contraseña *
-                </label>
-                <div className="relative">
-                  <input
-                    name="pw_ct"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.pw_ct}
-                    onChange={handleChange}
-                    required
-                    placeholder="Mínimo 6 caracteres"
-                    className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Confirmar Contraseña */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirmar Contraseña *
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    placeholder="Repite tu contraseña"
-                    className="w-full rounded-lg border border-gray-200 px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
 
               <button
                 type="submit"

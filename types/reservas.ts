@@ -2,9 +2,9 @@ export interface Producto {
   id: string;
   name: string;
   descripcion: string;
-  precio: string;
-  stock: string;
-  categoria: string;
+  precio: number;
+  stock: number;
+  categoria?: string;
   imagen: string;
   estado: string;
   proveedor: string;
@@ -13,31 +13,44 @@ export interface Producto {
   createdAt: string;
 }
 
+export interface Cliente {
+  id_ct: string;
+  nm_ct: string;
+  tl_ct: string;
+  em_ct: string;
+  ds_ct: string;
+  nc_ct: string;
+}
+
+
 export interface Reserva {
   id: string;
   productoId: string;
   fecha: string;
-  cantidad: string;
-  estado: 'pendiente' | 'confirmada' | 'completada' | 'cancelado' | 'completado';
-  createdAt: string;
-  clienteId?: string;
-  clienteNombre?: string;
+  cantidad: number; 
+  estado: 'pendiente' | 'completada' | 'cancelado';
+  productoNombre?: string;
   sucursalId?: string;
   sucursalNombre?: string;
-  productoNombre?: string; // Nuevo campo
+  clienteId?: string;
+  createdAt?: string;
 }
 
 
 export interface Venta {
-  id: string;
+  id?: string;
   productoId: string;
   clienteId: string;
   usuarioId: string;
-  total: string;
-  cantidad: string;
+  total: number; 
+  cantidad: number; 
   fecha: string;
   pago: string;
+  productoNombre?: string;
 }
+
+
+
 declare global {
   interface Window {
     google: typeof google;
@@ -77,14 +90,4 @@ export interface CartItem {
   descripcion: string;
   categoria: string;
   estado: string;
-}
-
-export interface Reservation {
-  id: string;
-  product: Product;
-  quantity: number;
-  pickupLocation: string;
-  reservationDate: string;
-  expiryDate: string;
-  status: 'active' | 'expired' | 'collected';
 }
