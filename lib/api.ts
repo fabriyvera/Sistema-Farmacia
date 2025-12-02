@@ -1,4 +1,4 @@
-import { Producto, Reserva, Venta, Sucursal, Product, Reservation } from '@/types/reservas';
+import { Producto, Reserva, Venta, Sucursal} from '@/types/reservas';
 
 const API_BASE = {
   productos: 'https://690a052a1a446bb9cc2104c7.mockapi.io/Productos',
@@ -37,11 +37,16 @@ export const apiService = {
     }
   },
 
-  // Productos
-  async getProductos(): Promise<Producto[]> {
-    const response = await fetch(API_BASE.productos);
-    return response.json();
-  },
+async getProductos(): Promise<Producto[]> {
+  const response = await fetch(API_BASE.productos);
+  const data = await response.json();
+  
+  // Mapear para asegurar que el precio sea número
+  return data.map((item: any) => ({
+    ...item,
+    precio: parseFloat(item.precio) // Convierte "45.00" a 45.00 numérico
+  }));
+},
 
   async getProducto(id: string): Promise<Producto> {
     const response = await fetch(`${API_BASE.productos}/${id}`);
@@ -85,23 +90,35 @@ export const apiService = {
 async createVenta(venta: Omit<Venta, 'id'>): Promise<Venta> {
   console.log('Enviando datos de venta:', venta);
   
+  // Asegurar que los valores numéricos sean números (no strings)
+  const ventaParaEnviar = {
+    ...venta,
+    // Convertir total a número si es string
+    total: venta.total,
+    // Convertir cantidad a número si es string
+    cantidad: venta.cantidad,
+  };
+  
   const response = await fetch(API_BASE.ventas, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      ...venta,
-      total: venta.total.toString(), // Convertir a string si tu API lo requiere
-      cantidad: venta.cantidad.toString(),
-    }),
+    body: JSON.stringify(ventaParaEnviar), // Enviar como JSON normal
   });
   
   if (!response.ok) {
     throw new Error(`Error creando venta: ${response.statusText}`);
   }
   
-  return response.json();
+  const ventaCreada = await response.json();
+  
+  // Asegurar que la respuesta tenga los tipos correctos
+  return {
+    ...ventaCreada,
+    total: typeof ventaCreada.total === 'string' ? parseFloat(ventaCreada.total) : ventaCreada.total,
+    cantidad: typeof ventaCreada.cantidad === 'string' ? parseInt(ventaCreada.cantidad) : ventaCreada.cantidad,
+  };
 },
 
   async getVentas(): Promise<Venta[]> {

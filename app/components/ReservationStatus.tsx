@@ -13,11 +13,13 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
 
   // Filtrar reservas según la pestaña activa
   const filteredReservations = reservations.filter(reserva => {
+    if (!reserva.estado) return false;
+    
     switch (activeTab) {
       case 'pendientes':
         return reserva.estado === 'pendiente';
       case 'completadas':
-        return reserva.estado === 'completado';
+        return reserva.estado === 'completada';
       case 'canceladas':
         return reserva.estado === 'cancelado';
       default:
@@ -25,13 +27,18 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
     }
   });
 
-  // Ordenar reservas por fecha (más recientes primero)
-  const sortedReservations = [...filteredReservations].sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  // Ordenar reservas por fecha
+  const sortedReservations = [...filteredReservations].sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return dateB - dateA;
+  });
 
-  const getStatusIcon = (estado: string) => {
-    switch (estado) {
+  const getStatusIcon = (estado: string | undefined) => {
+    if (!estado) return <Clock className="w-5 h-5 text-gray-600" />;
+    
+    switch (estado.toLowerCase()) {
+      case 'completada':
       case 'completado':
         return <CheckCircle className="w-5 h-5 text-green-600" />;
       case 'pendiente':
@@ -43,8 +50,11 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
     }
   };
 
-  const getStatusColor = (estado: string) => {
-    switch (estado) {
+  const getStatusColor = (estado: string | undefined): string => {
+    if (!estado) return 'text-gray-800 bg-gray-100 border-gray-200';
+    
+    switch (estado.toLowerCase()) {
+      case 'completada':
       case 'completado':
         return 'text-green-800 bg-green-100 border-green-200';
       case 'pendiente':
@@ -56,8 +66,11 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
     }
   };
 
-  const getStatusText = (estado: string) => {
-    switch (estado) {
+  const getStatusText = (estado: string | undefined): string => {
+    if (!estado) return 'Desconocido';
+    
+    switch (estado.toLowerCase()) {
+      case 'completada':
       case 'completado':
         return 'Completado';
       case 'pendiente':
@@ -65,27 +78,74 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
       case 'cancelado':
         return 'Cancelado';
       default:
-        return estado;
+        return estado.charAt(0).toUpperCase() + estado.slice(1);
     }
   };
 
-  const getProductInfo = (productoId: string) => {
-    return products.find(p => p.id === productoId) || {
+  const getProductInfo = (productoId: string | undefined) => {
+    if (!productoId) {
+      return {
+        name: 'Producto no especificado',
+        imagen: '',
+        precio: 0
+      };
+    }
+    
+    const product = products.find(p => p.id === productoId);
+    return product || {
       name: 'Producto no encontrado',
       imagen: '',
-      precio: 'BS 0.00'
+      precio: 0
     };
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+  const formatDate = (dateString: string | undefined | null): string => {
+    if (!dateString) return 'Fecha no disponible';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Fecha inválida';
+      
+      return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch {
+      return 'Fecha inválida';
+    }
   };
 
-  if (reservations.length === 0) {
+  // Función corregida para calcular el total
+  const calculateTotal = (reserva: Reserva): string => {
+    try {
+      const product = getProductInfo(reserva.productoId);
+      
+      // Convertir cantidad a número (asegurarse que sea un número)
+      const cantidad = typeof reserva.cantidad === 'string' 
+        ? parseInt(reserva.cantidad, 10) || 0
+        : reserva.cantidad || 0;
+      
+      // Usar el precio del producto (debería ser número)
+      const precio = product.precio || 0;
+      
+      // Calcular total
+      const total = precio * cantidad;
+      
+      // Formatear a 2 decimales
+      return total.toFixed(2);
+      
+    } catch (error) {
+      console.error('Error calculando total:', error);
+      return '0.00';
+    }
+  };
+
+  const countByStatus = (estado: string): number => {
+    return reservations.filter(r => r.estado === estado).length;
+  };
+
+  if (!reservations || reservations.length === 0) {
     return (
       <section className="mb-12">
         <div className="flex items-center justify-between mb-6">
@@ -135,7 +195,7 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            Pendientes ({reservations.filter(r => r.estado === 'pendiente').length})
+            Pendientes ({countByStatus('pendiente')})
           </button>
           <button
             onClick={() => setActiveTab('completadas')}
@@ -145,7 +205,7 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            Completadas ({reservations.filter(r => r.estado === 'completado').length})
+            Completadas ({countByStatus('completada')})
           </button>
           <button
             onClick={() => setActiveTab('canceladas')}
@@ -155,18 +215,19 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            Canceladas ({reservations.filter(r => r.estado === 'cancelado').length})
+            Canceladas ({countByStatus('cancelado')})
           </button>
         </div>
       </div>
 
       {/* Lista de Reservas */}
       <div className="space-y-4">
-        {sortedReservations.map((reserva) => {
+        {sortedReservations.map((reserva, index) => {
           const product = getProductInfo(reserva.productoId);
+          const uniqueKey = `${reserva.id || 'no-id'}-${index}-${reserva.fecha || 'no-date'}`;
           
           return (
-            <div key={reserva.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div key={uniqueKey} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               {/* Header de la reserva */}
               <div className="border-b border-gray-200 p-4">
                 <div className="flex items-center justify-between">
@@ -174,7 +235,7 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
                     {getStatusIcon(reserva.estado)}
                     <div>
                       <h3 className="font-medium text-gray-800">
-                        Reserva #{reserva.id}
+                        Reserva #{reserva.id || 'N/A'}
                       </h3>
                       <p className="text-sm text-gray-500">
                         Creada el {formatDate(reserva.createdAt)}
@@ -198,7 +259,7 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
                       className="w-full h-full object-contain p-1"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMiAxNkMyOC42ODYzIDE2IDI2IDE4LjY4NjMgMjYgMjJWMjZIMzhWMjJDMzggMTguNjg2MyAzNS4zMTM3IDE2IDMyIDE2WiIgZmlsbD0iIzlDQTNBQiIvPgo8cGF0aCBkPSJNMzggMjhIMjZDMjMuNzkwOSAyOCAyMiAyOS43OTA5IDIyIDMyVjQ0QzIyIDQ2LjIwOTEgMjMuNzkwOSA0OCAyNiA0OEgzOEM0MC4yMDkxIDQ4IDQyIDQ2LjIwOTEgNDIgNDRWMzJDNDIgMjkuNzkwOSA0MC4yMDkxIDI4IDM4IDI4WiIgZmlsbD0iIzlDQTNBQiIvPgo8L3N2Zz4K';
+                        target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMiAxNkMyOC42ODYzIDE2IDI2IDE4LjY4NjMgMjYgMjJWMjZIMzhWMjJDMzggMTguNjg2MyAzNS4zMTM3IDE2IDMyIDE2WiIgZmlsbD0iIzlDQTNBQiIvPgo8cGF0aCBkPSJNMzggMjhIMjZDMjMuNzkwOSAyOCAyiAyOS43OTA5IDIyIDMyVjQ0QzIyIDQ2LjIwOTEgMjMuNzkwOSA0OCAyNiA0OEgzOEM0MC4yMDkxIDQ4IDQyIDQ2LjIwOTEgNDIgNDRWMzJDNDIgMjkuNzkwOSA0MC4yMDkxIDI4IDM4IDI4WiIgZmlsbD0iIzlDQTNBQiIvPgo8L3N2Zz4K';
                       }}
                     />
                   </div>
@@ -209,7 +270,6 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
                       {product.name}
                     </h4>
                     
-                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                       <div className="flex items-center gap-2 text-gray-600">
                         <Calendar className="w-4 h-4" />
@@ -217,11 +277,12 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
                       </div>
                       <div className="flex items-center gap-2 text-gray-600">
                         <Package className="w-4 h-4" />
-                        <span>Cantidad: {reserva.cantidad}</span>
+                        <span>Cantidad: {reserva.cantidad || '0'}</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-600">
                         <MapPin className="w-4 h-4" />
-                        <span>Total: Bs {(parseFloat(product.precio.replace('BS ', '')) * parseInt(reserva.cantidad)).toFixed(2)}</span>
+                        {/* Llamar a calculateTotal corregida */}
+                        <span>Total: Bs {calculateTotal(reserva)}</span>
                       </div>
                     </div>
                   </div>
@@ -237,8 +298,6 @@ export function ReservationStatus({ reservations, products }: ReservationStatusP
                   </div>
                 )}
               </div>
-
-              
             </div>
           );
         })}

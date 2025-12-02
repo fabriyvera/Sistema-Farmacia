@@ -121,12 +121,12 @@ export default function App() {
     const cartItem: CartItem = {
       id: product.id,
       name: product.name,
-      price: parseFloat(product.precio.replace('BS ', '')),
+      price: product.precio,
       quantity: 1,
       image: product.imagen,
-      stock: parseInt(product.stock, 10),
+      stock: product.stock,
       descripcion: product.descripcion,
-      categoria: product.categoria,
+      categoria: String(product.categoria),
       estado: product.estado
     };
 
@@ -220,7 +220,7 @@ export default function App() {
 
     if (selectedCategory) {
       filtered = filtered.filter(product => 
-        product.categoria.toLowerCase() === selectedCategory.toLowerCase()
+        String(product.categoria).toLowerCase() === selectedCategory.toLowerCase()
       );
     }
 
@@ -229,7 +229,7 @@ export default function App() {
       filtered = filtered.filter(product =>
         product.name.toLowerCase().includes(term) ||
         product.descripcion.toLowerCase().includes(term) ||
-        product.categoria.toLowerCase().includes(term)
+        String(product.categoria).toLowerCase().includes(term)
       );
     }
 
@@ -241,7 +241,7 @@ export default function App() {
   // Update category counts based on actual products
   const updatedCategories = categories.map(category => {
     const count = products.filter(product => 
-      product.categoria.toLowerCase() === category.name.toLowerCase()
+      String(product.categoria).toLowerCase() === category.name.toLowerCase()
     ).length;
     return { ...category, itemCount: count };
   });

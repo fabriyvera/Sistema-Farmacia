@@ -77,60 +77,36 @@ const Dashboard = () => {
   };
 
   // Confirmar recogida de reserva y crear venta - VERSIÓN CORREGIDA
-  const confirmarRecogida = async (reserva: Reserva) => {
+const confirmarRecogida = async (reserva: Reserva) => {
     try {
-      setUpdating(reserva.id);
+        setUpdating(reserva.id);
 
-      // 1. Validaciones iniciales
-      if (!Array.isArray(productos) || productos.length === 0) {
-        alert('Error: No se han cargado los productos');
-        return;
-      }
+        // ... validaciones de producto existente ...
+        const producto = productos.find(p => p.id === reserva.productoId);
+        if (!producto) return;
 
-      // 2. Buscar el producto
-      const producto = productos.find(p => p.id === reserva.productoId);
-      if (!producto) {
-        alert('Error: Producto no encontrado');
-        return;
-      }
+        // --- CAMBIO IMPORTANTE AQUÍ ---
+        // Usamos Number() para garantizar que sea numero, 
+        // incluso si por error llega como string.
+        const precioReal = Number(producto.precio);
+        const cantidadReal = Number(reserva.cantidad);
 
-      // 3. CALCULAR EL TOTAL - Versión mejorada
-      let precioUnitario: number;
-      
-      // Intentar obtener precio del producto
-      if (producto.precio) {
-        precioUnitario = Number(producto.precio);
-      } else if (producto.precio) {
-        precioUnitario = Number(producto.precio);
-      } else {
-        // Si no tiene precio, pedirlo al usuario
-        const precioInput = prompt(
-          `El producto "${producto.name}" no tiene precio registrado.\n` +
-          `Ingrese el precio unitario:`
-        );
-        
-        if (!precioInput || isNaN(parseFloat(precioInput))) {
-          alert('Precio no válido. Operación cancelada.');
-          return;
-        }
-        
-        precioUnitario = parseFloat(precioInput);
-      }
+        // Calculamos el total
+        const totalCalculado = precioReal * cantidadReal;
 
-      const total = precioUnitario * Number(reserva.cantidad);
+        console.log(`Calculando: ${precioReal} * ${cantidadReal} = ${totalCalculado}`);
 
-      // 4. Preparar datos de la venta
-      const ventaData: Omit<Venta, 'id'> = {
-        productoId: reserva.productoId,
-        clienteId: reserva.clienteId || 'cliente-desconocido',
-        usuarioId: user?.id || 'admin-1',
-        total: total.toFixed(2), // Convertir a string con 2 decimales
-        cantidad: reserva.cantidad, // Convertir a string
-        fecha: new Date().toISOString(),
-        pago: "efectivo",
-        productoNombre: producto.name,
-        precioUnitario: precioUnitario.toFixed(2)
-      };
+        // Preparamos la venta
+        const ventaData: Omit<Venta, 'id'> = {
+            productoId: reserva.productoId,
+            clienteId: reserva.clienteId || 'cliente-desconocido',
+            usuarioId: user?.id || 'admin-1',
+            total: totalCalculado, // Aquí va el total correcto
+            cantidad: cantidadReal,
+            fecha: new Date().toISOString(),
+            pago: "efectivo",
+            productoNombre: producto.name
+        };
 
       console.log('Datos de venta a enviar:', ventaData);
 
@@ -159,7 +135,7 @@ const Dashboard = () => {
         id: ventaCreada.id || Date.now().toString()
       }]);
 
-      alert(`✅ Reserva confirmada y venta registrada\nTotal: Bs. ${total.toFixed(2)}`);
+      alert(`Reserva confirmada y venta registrada\nTotal: Bs. ${totalCalculado}`);
       
     } catch (error) {
       console.error('Error confirmando recogida:', error);

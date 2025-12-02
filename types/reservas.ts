@@ -3,7 +3,7 @@ export interface Producto {
   name: string;
   descripcion: string;
   precio: number;
-  stock?: string;
+  stock: number;
   categoria?: string;
   imagen: string;
   estado: string;
@@ -27,7 +27,7 @@ export interface Reserva {
   id: string;
   productoId: string;
   fecha: string;
-  cantidad: string; // La API devuelve string
+  cantidad: number; 
   estado: 'pendiente' | 'completada' | 'cancelado';
   productoNombre?: string;
   sucursalId?: string;
@@ -42,12 +42,11 @@ export interface Venta {
   productoId: string;
   clienteId: string;
   usuarioId: string;
-  total: string; // La API espera string, no number
-  cantidad: string; // La API espera string, no number
+  total: number; 
+  cantidad: number; 
   fecha: string;
   pago: string;
   productoNombre?: string;
-  precioUnitario?: string;
 }
 
 
@@ -91,14 +90,4 @@ export interface CartItem {
   descripcion: string;
   categoria: string;
   estado: string;
-}
-
-export interface Reservation {
-  id: string;
-  product: Product;
-  quantity: number;
-  pickupLocation: string;
-  reservationDate: string;
-  expiryDate: string;
-  status: 'active' | 'expired' | 'collected';
 }
