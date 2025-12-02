@@ -22,6 +22,7 @@ import {
 } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
+import { Switch } from "./ui/switch"; // Importamos el Switch
 import { Plus, Search, MapPin, Edit, Trash2 } from "lucide-react";
 
 const API_URL = "https://690a052a1a446bb9cc2104c7.mockapi.io/Proveedores";
@@ -117,6 +118,30 @@ const Suppliers = () => {
     setOpenDialog(true);
   };
 
+  // NUEVA FUNCIÓN: Cambiar estado con el Switch
+  const toggleStatus = async (supplier: Supplier) => {
+    // Calculamos el nuevo estado
+    const newStatus = supplier.estado === "Activo" ? "Inactivo" : "Activo";
+
+    // Actualización optimista (cambia la UI inmediatamente)
+    setSuppliers((prev) =>
+      prev.map((s) => (s.id === supplier.id ? { ...s, estado: newStatus } : s))
+    );
+
+    try {
+      // Petición a la API para guardar el cambio
+      await fetch(`${API_URL}/${supplier.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...supplier, estado: newStatus }),
+      });
+    } catch (error) {
+      console.error("Error al actualizar estado:", error);
+      // Si falla, revertimos los cambios recargando datos
+      fetchSuppliers();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -199,7 +224,7 @@ const Suppliers = () => {
                   id="estado"
                   value={formData.estado}
                   onChange={handleChange}
-                  className="border rounded-md px-3 py-2"
+                  className="border rounded-md px-3 py-2 w-full"
                 >
                   <option value="Activo">Activo</option>
                   <option value="Inactivo">Inactivo</option>
@@ -248,7 +273,7 @@ const Suppliers = () => {
             <TableBody>
               {filteredSuppliers.map((supplier) => (
                 <TableRow key={supplier.id}>
-                  <TableCell>{supplier.name}</TableCell>
+                  <TableCell className="font-medium">{supplier.name}</TableCell>
                   <TableCell>{supplier.email}</TableCell>
                   <TableCell>
                     <div className="text-sm text-muted-foreground flex items-center gap-1">
@@ -259,15 +284,20 @@ const Suppliers = () => {
                   <TableCell>{supplier.ciudad}</TableCell>
                   <TableCell>{supplier.tipo}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        supplier.estado === "Activo" ? "default" : "secondary"
-                      }
-                    >
-                      {supplier.estado}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={supplier.estado === "Activo"}
+                        onCheckedChange={() => toggleStatus(supplier)}
+                      />
+                      <Badge
+                        variant={
+                          supplier.estado === "Activo" ? "default" : "secondary"
+                        }
+                      >
+                        {supplier.estado}
+                      </Badge>
+                    </div>
                   </TableCell>
-                  
                 </TableRow>
               ))}
             </TableBody>
