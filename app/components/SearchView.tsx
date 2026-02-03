@@ -21,10 +21,10 @@ const SearchView = ({ onSelectProduct }: SearchViewProps) => {
   const convertProductoToProduct = (producto: Producto): Product => ({
     id: producto.id,
     name: producto.name,
-    category: producto.categoria,
-    price: parseFloat(producto.precio),
+    category: String(producto.categoria),
+    price: producto.precio,
     image: producto.imagen,
-    stock: parseInt(producto.stock),
+    stock: producto.stock,
     requiresPrescription: producto.recetaRequerida === "Si",
     description: producto.descripcion,
     activeIngredient: producto.descripcion.split('.')[0]

@@ -51,7 +51,6 @@ const Suppliers = () => {
     estado: "Activo",
   });
 
-  // Cargar datos desde la API
   const fetchSuppliers = async () => {
     const res = await fetch(API_URL);
     const data = await res.json();

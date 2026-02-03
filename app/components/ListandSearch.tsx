@@ -15,10 +15,10 @@ import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Search, Mail, Phone, MapPin } from "lucide-react";
 
 interface Cliente {
-  nc_ct: string;   // Nombre completo
-  em_ct: string;   // Email
-  tl_ct: string;   // Teléfono
-  ds_ct: string;   // Dirección
+  nc_ct: string;   
+  em_ct: string;   
+  tl_ct: string;   
+  ds_ct: string;  
 }
 
 const ClienteList = () => {
